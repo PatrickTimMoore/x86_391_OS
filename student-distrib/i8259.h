@@ -12,6 +12,10 @@
 #define MASTER_8259_PORT    0x20
 #define SLAVE_8259_PORT     0xA0
 
+/*The second ports that each PIC sits on*/
+#define MASTER_8259_PORT_2  0x21
+#define SLAVE_8259_PORT_2   0xA1
+
 /* Initialization control words to init each PIC.
  * See the Intel manuals for details on the meaning
  * of each word */
@@ -26,6 +30,11 @@
  * the interrupt number and sent out to the PIC
  * to declare the interrupt finished */
 #define EOI                 0x60
+
+/*this is used to mask all interrupts before init*/
+#define MASK_ALL            0xFF
+/*this is the irq line for slave*/
+#define SLAVE_LINE          2
 
 /* Externally-visible functions */
 
