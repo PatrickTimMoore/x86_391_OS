@@ -31,7 +31,9 @@ continue:
     # Load the GDT
     lgdt gdt_desc_ptr
     #initialize the IDT
+    pushal
     call init_idt
+    popal
     #Load the IDT
     lidt idt_desc_ptr
 

@@ -43,17 +43,17 @@ uint32_t idt_array[EXCEPTION_NUM] = {
 *  ouputs: 0 for success and -1 for failure
 *  effects: initialize each entry in idt
 */
-int init_idt(void){
+int init_idt(){
     //loop varibale
 	int i;
 	//loop through the idt to initialize each entry
 	for(i=0; i< NUM_VEC; i++ ){
-		//these bits are the same for exception, interrupt and 
-		//system call
-		idt[i].present = 1;
+		  //these bits are the same for exception, interrupt and 
+		  //system call
+		  idt[i].present = 1;
   		idt[i].size = 1;
   		//those reserved bits are not changed
-		idt[i].reserved0 = 0;
+		  idt[i].reserved0 = 0;
   		idt[i].reserved1 = 1;
   		idt[i].reserved2 = 1;
   		//we choose the interrupt gate
@@ -65,25 +65,25 @@ int init_idt(void){
   			//set the offset for exception
             SET_IDT_ENTRY(idt[i], exception_list[i]);
   		}
-        //check if it is a system call
-        else if(i == SYSTEM_CALL_NUM){
+      //check if it is a system call
+      else if(i == SYSTEM_CALL_NUM){
             //set the priority to user level
             idt[i].dpl = 3;
             //set the offset for system call handler
             SET_IDT_ENTRY(idt[i], system_call_handler);
-        }
-        else if(i == KEYBOARD_NUM ){
+      }
+      else if(i == KEYBOARD_NUM ){
         	//set the offset for keyboard interrupt
         	SET_IDT_ENTRY(idt[i], keyboard_interrupt);
-        }
-        else if(i == RTC_NUM){
+      }
+      else if(i == RTC_NUM){
         	//set the offset for the RTC interrupt
         	SET_IDT_ENTRY(idt[i], rtc_interrupt);
-        }
-        else{
+      }
+      else{
         	//the entries are not used yet
         	idt[i].present = 0;
-        }
+      }
 
 
 	}
