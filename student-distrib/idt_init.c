@@ -3,7 +3,7 @@
   in the interrupt descriptor table.
 */
 
-#include idt_init.h
+#include "idt_init.h"
 #include "x86_desc.h"
 #include "exception_handler.h"
 
@@ -14,7 +14,7 @@
 #define RESERVED_EXC     15
 
 //list of exception handler address used to handle exceptions
-uint32_t idt_array[EXCEPTION_NUM] = {
+uint32_t exception_list[EXCEPTION_NUM] = {
 	(uint32_t)exception_handler_0,
 	(uint32_t)exception_handler_1,
 	(uint32_t)exception_handler_2,
@@ -70,15 +70,15 @@ int init_idt(){
             //set the priority to user level
             idt[i].dpl = 3;
             //set the offset for system call handler
-            SET_IDT_ENTRY(idt[i], system_call_handler);
+            //SET_IDT_ENTRY(idt[i], system_call_handler);
       }
       else if(i == KEYBOARD_NUM ){
         	//set the offset for keyboard interrupt
-        	SET_IDT_ENTRY(idt[i], keyboard_interrupt);
+        	//SET_IDT_ENTRY(idt[i], keyboard_interrupt);
       }
       else if(i == RTC_NUM){
         	//set the offset for the RTC interrupt
-        	SET_IDT_ENTRY(idt[i], rtc_interrupt);
+        	//SET_IDT_ENTRY(idt[i], rtc_interrupt);
       }
       else{
         	//the entries are not used yet

@@ -3,6 +3,7 @@
 
  void exception_handler_0(){
  	printf("Divide Error Exception\n");
+ 	while(1);
  }
  void exception_handler_1(){
  	printf("Debug Exception\n");
@@ -55,7 +56,7 @@
  void exception_handler_17(){
  	printf("Alignment Check Exception\n");
  }
- void exception_handler_18("Machine-Check Exception\n"){
+ void exception_handler_18(){
  	printf("Machine-Check Exception\n");
  }
 

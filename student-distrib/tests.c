@@ -41,8 +41,31 @@ int idt_test(){
 			result = FAIL;
 		}
 	}
-
+ 
 	return result;
+}
+
+/**
+ *	Test the exception handler by a division of zero
+ *  It should print out the exception message if it works
+ *	in
+ */
+/* Exception Test 
+ * 
+ * Description: Test the exception handler by a division of zero.
+ *              It should print out the exception message.
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ */
+int idt_test_exception() {
+	TEST_HEADER;
+	int num1= 1;
+	int num2= 0;
+	int result;
+	//this should trigger a exception
+	result= num1 / num2;
+	return FAIL; 
 }
 
 // add more tests here
@@ -57,4 +80,5 @@ int idt_test(){
 void launch_tests(){
 	TEST_OUTPUT("idt_test", idt_test());
 	// launch your tests here
+	idt_test_exception();
 }

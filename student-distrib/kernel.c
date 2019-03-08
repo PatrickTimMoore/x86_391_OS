@@ -8,6 +8,7 @@
 #include "i8259.h"
 #include "debug.h"
 #include "tests.h"
+#include "idt_init.h"
 
 #define RUN_TESTS
 
@@ -141,6 +142,8 @@ void entry(unsigned long magic, unsigned long addr) {
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */
+    /*initialize the idt*/
+    init_idt();
 
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your

@@ -5,7 +5,7 @@
 
 #include "multiboot.h"
 #include "x86_desc.h"
-#include "idt_init.h"
+
 
 .data
     PESET = 0x1B       #Set the corresponding bits in cr0 or leave them as is
@@ -31,12 +31,8 @@ continue:
     # Load the GDT
     lgdt gdt_desc_ptr
     #initialize the IDT
-    pushal
-    call init_idt
-    popal
     #Load the IDT
     lidt idt_desc_ptr
-
     #Set condition code 0 register
     movl %cr0, %ebx #Load cr0
     orl  PESET, %ebx #Check above for flags we set
