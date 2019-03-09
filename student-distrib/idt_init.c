@@ -70,15 +70,15 @@ int init_idt(){
             //set the priority to user level
             idt[i].dpl = 3;
             //set the offset for system call handler
-            //SET_IDT_ENTRY(idt[i], system_call_handler);
+            SET_IDT_ENTRY(idt[i], system_call_handler);
       }
       else if(i == KEYBOARD_NUM ){
         	//set the offset for keyboard interrupt
-        	//SET_IDT_ENTRY(idt[i], keyboard_interrupt);
+        	SET_IDT_ENTRY(idt[i], keyboard_interrupt);
       }
       else if(i == RTC_NUM){
         	//set the offset for the RTC interrupt
-        	//SET_IDT_ENTRY(idt[i], rtc_interrupt);
+        	SET_IDT_ENTRY(idt[i], rtc_interrupt);
       }
       else{
         	//the entries are not used yet
