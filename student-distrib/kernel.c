@@ -9,6 +9,9 @@
 #include "debug.h"
 #include "tests.h"
 #include "idt_init.h"
+#include "rtc_handler.h"
+#include "keyboard_handler.h"
+#include "paging.h"
 
 #define RUN_TESTS
 
@@ -144,6 +147,17 @@ void entry(unsigned long magic, unsigned long addr) {
      * PIC, any other initialization stuff... */
     /*initialize the idt*/
     init_idt();
+    /*intialize the rtc*/
+    //init_rtc();
+
+    /* Init the keyboard for interrupts */
+    init_keyboard();
+
+    /*Init the paging*/
+    init_page_dir();
+    init_kernel_page();
+    init_vmem();
+    set_paging();
 
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your

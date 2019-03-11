@@ -6,18 +6,20 @@
 #include "idt_init.h"
 #include "x86_desc.h"
 #include "exception_handler.h"
+#include "handler_interface.h"
 
 #define SYSTEM_CALL_NUM  0x80
 #define KEYBOARD_NUM     0x21
 #define RTC_NUM          0x28
-#define EXCEPTION_NUM    20
-#define RESERVED_EXC     15
+#define EXCEPTION_NUM    32
+
 
 //list of exception handler address used to handle exceptions
 uint32_t exception_list[EXCEPTION_NUM] = {
 	(uint32_t)exception_handler_0,
 	(uint32_t)exception_handler_1,
 	(uint32_t)exception_handler_2,
+  (uint32_t)exception_handler_3,
 	(uint32_t)exception_handler_4,
 	(uint32_t)exception_handler_5,
 	(uint32_t)exception_handler_6,
@@ -34,6 +36,18 @@ uint32_t exception_list[EXCEPTION_NUM] = {
 	(uint32_t)exception_handler_17,
 	(uint32_t)exception_handler_18,
 	(uint32_t)exception_handler_19,
+  (uint32_t)exception_handler_20,
+  (uint32_t)exception_handler_21,
+  (uint32_t)exception_handler_22,
+  (uint32_t)exception_handler_23,
+  (uint32_t)exception_handler_24,
+  (uint32_t)exception_handler_25,
+  (uint32_t)exception_handler_26,
+  (uint32_t)exception_handler_27,
+  (uint32_t)exception_handler_28,
+  (uint32_t)exception_handler_29,
+  (uint32_t)exception_handler_30,
+  (uint32_t)exception_handler_31,
 };
 
 /* Function: int init_idt(void)
@@ -61,7 +75,7 @@ int init_idt(){
   		idt[i].reserved4 = 0;
   		idt[i].seg_selector = KERNEL_CS;
   		//check if it is valid exception
-  		if(i < EXCEPTION_NUM && i != RESERVED_EXC){
+  		if(i < EXCEPTION_NUM){
   			//set the offset for exception
             SET_IDT_ENTRY(idt[i], exception_list[i]);
   		}

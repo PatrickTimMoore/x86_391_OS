@@ -2,6 +2,9 @@
 #define ASM    1
 #include "x86_desc.h"
 
+
+
+
 /* interrupt handler common interface
 ** This is a common interface for all of the interrupt: RTC and keyboard
 ** In this common codes, we will save all the registers and call the specifc
@@ -35,5 +38,6 @@ func_name:										              ;\
 ** Outputs  : none
 ** Registers: all the registers and flags are saved
 */
-
+.global system_call_handler
+system_call_handler:
 

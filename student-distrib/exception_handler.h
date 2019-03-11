@@ -24,5 +24,18 @@ extern void exception_handler_16();
 extern void exception_handler_17();
 extern void exception_handler_18();
 extern void exception_handler_19();
+extern void exception_handler_20();
+extern void exception_handler_21();
+extern void exception_handler_22();
+extern void exception_handler_23();
+extern void exception_handler_24();
+extern void exception_handler_25();
+extern void exception_handler_26();
+extern void exception_handler_27();
+extern void exception_handler_28();
+extern void exception_handler_29();
+extern void exception_handler_30();
+extern void exception_handler_31();
+
 
 #endif

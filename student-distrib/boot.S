@@ -34,9 +34,9 @@ continue:
     #Load the IDT
     lidt idt_desc_ptr
     #Set condition code 0 register
-    movl %cr0, %ebx #Load cr0
-    orl  PESET, %ebx #Check above for flags we set
-    movl %ebx, %cr0 #Store it back in
+    #movl %cr0, %ebx #Load cr0
+    #orl  PESET, %ebx #Check above for flags we set
+    #movl %ebx, %cr0 #Store it back in
 
     # Load CS with the new descriptor value
     ljmp    $KERNEL_CS, $keep_going

@@ -16,9 +16,8 @@ uint8_t slave_mask;  /* IRQs 8-15 */
 
 /* Initialize the 8259 PIC */
 void i8259_init(void) {
-	//clear the interrupts and save flags
-	unsigned long flag;
-	cli_and_save(flag);
+	//clear the interrupts 
+	cli();
 	//mask all interrupts on the PIC
 	outb(MASK_ALL, MASTER_8259_PORT_2);
 	outb(MASK_ALL, SLAVE_8259_PORT_2);
@@ -32,10 +31,13 @@ void i8259_init(void) {
 	outb(ICW2_SLAVE, SLAVE_8259_PORT_2);
 	outb(ICW3_SLAVE, SLAVE_8259_PORT_2);
 	outb(ICW4, SLAVE_8259_PORT_2);
+
+	outb(MASK_ALL, MASTER_8259_PORT_2);
+	outb(MASK_ALL, SLAVE_8259_PORT_2);
     //enable the slave PIC
     enable_irq(SLAVE_LINE);
-    //restore the flags saved before
-	restore_flags(flag);
+    //restore the interrupts
+	sti();
 }
 
 /* Enable (unmask) the specified IRQ */
@@ -116,7 +118,7 @@ void send_eoi(uint32_t irq_num) {
         //send the eoi to the slave pic
         outb(eoi, SLAVE_8259_PORT);
         //also send eoi to the line 2 on master
-        outb(EOI | SLAVE_LINE, MASTER_8259_PORT);
+        outb(EOI + SLAVE_LINE, MASTER_8259_PORT);
     }
 
 }
