@@ -160,6 +160,7 @@ int rtc_interrupt_test(){
  * Side Effects: None
  */
 int valid_paging_tests(){
+	//If statement contents are so that compiler doesn't optimize
 	TEST_HEADER;
 	int* a;
 	char* b;
@@ -170,30 +171,48 @@ int valid_paging_tests(){
 	if(!(*a));
 
 	a = (int*)VMEM_ADDR_START;
-	if(!(*a));
+	if(!(*a)){
+		a++;
+	}
 	a = (int*)KERNEL_LAST_4BYTE;
-	if(!(*a));
+	if(!(*a)){
+		a++;
+	}
 	a = (int*)VMEM_LAST_4BYTE;
-	if(!(*a));
+	if(!(*a)){
+		a++;
+	}
 	
 	//TRY EXTRACTING BYTES AT PAGE OVERLAP LEVEL
 	b = (char*)VMEM_LAST_BYTE_0;
-	if(!(*b));
+	if(!(*b)){
+		b++;
+	}
 
 	b = (char*)VMEM_LAST_BYTE_1;
-	if(!(*b));
+	if(!(*b)){
+		b++;
+	}
 
 	b = (char*)VMEM_LAST_BYTE_2;
-	if(!(*b));
+	if(!(*b)){
+		b++;
+	}
 	
 	b = (char*)KERNEL_LAST_BYTE_0;
-	if(!(*b));
+	if(!(*b)){
+		b++;
+	}
 	
 	b = (char*)KERNEL_LAST_BYTE_1;
-	if(!(*b));
+	if(!(*b)){
+		b++;
+	}
 	
 	b = (char*)KERNEL_LAST_BYTE_2;
-	if(!(*b));
+	if(!(*b)){
+		b++;
+	}
 
 	return result;
 }
