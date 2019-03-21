@@ -3,6 +3,7 @@
 #include "lib.h"
 #include "keyboard_handler.h"
 #include "i8259.h"
+#include "rtc_handler.h"
 
 #define IRQ1KEYBOARD 0x01
 #define KEYBOARDDATAPORT 0x60

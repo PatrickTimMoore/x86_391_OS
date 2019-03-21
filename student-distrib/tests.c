@@ -1,6 +1,7 @@
 #include "tests.h"
 #include "x86_desc.h"
 #include "lib.h"
+#include "rtc_handler.h"
 
 #define PASS 1
 #define FAIL 0
@@ -134,19 +135,6 @@ int keyboard_test_interrupt() {
 
 
 
-/* RTC interrupt1 Test 
- * 
- * Description: Test the exception handler by a division of zero.
- *              It should print out the exception message.
- * Inputs: None
- * Outputs: PASS/FAIL
- * Side Effects: None
- */
-int rtc_interrupt_test(){
-	TEST_HEADER;
-	return FAIL;
-}
-
 /**
  *	Test the paging by passing the absolute limits of what should
  	be the limits of paging addresses.
@@ -273,6 +261,51 @@ int invalid_paging_tests_byte(char* a){
 // add more tests here
 
 /* Checkpoint 2 tests */
+
+/*
+ * Description: Test if the functionality of rtc_open, 
+   rtc_read and rtc_write() all work correctly
+ * Inputs: None
+ * Outputs: None
+ * Side Effects: we will see that the message "read rtc correctly" 
+ * appears on the screen
+ */
+void rtc_driver_test(){
+
+    //loop varibales
+	int loop;
+	//hold the number of 1s to write
+	int count_num;
+	//hold the upper bound of 1s for each frequecy
+	int count_bound=4;
+	//the frequency for RTC
+	uint32_t freq = 2;		
+	//open the rtc
+	rtc_open(NULL);
+	//we will check the frequency from 2 to 256
+	for (loop=0; loop<8; loop++)		
+	{
+		//clear the screen
+        clear();
+	    //initialize the counts of number of 1s
+		count_num=0;
+		while(count_num < count_bound)
+		{
+			//test the read
+			rtc_read(0,0,0);		
+			//print out the ‘1’ for each interrupt
+			putc('1');	
+			//update the count of 1s
+			count_num++;	
+		}
+		//update the frequency
+		freq= freq * 2;
+		count_bound=count_bound*2;
+		rtc_write(0, &freq, 4);		
+	}
+}
+
+
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
@@ -281,10 +314,16 @@ int invalid_paging_tests_byte(char* a){
 /* Test suite entry point */
 void launch_tests(){
 
-	TEST_OUTPUT("idt_test", idt_test());
-	TEST_OUTPUT("valid_paging_tests", valid_paging_tests());
-	//invalid_paging_tests(ZERO_ADDR);
+
 	// launch your tests here
+	//checkpoint 1 test
+    //TEST_OUTPUT("idt_test", idt_test());
 	//idt_test_exception();
+	//TEST_OUTPUT("valid_paging_tests", valid_paging_tests());
+	//invalid_paging_tests(ZERO_ADDR);
+
+	//checkpoint2 test
+	rtc_driver_test();
+
 
 }

@@ -148,7 +148,7 @@ void entry(unsigned long magic, unsigned long addr) {
     /*initialize the idt*/
     init_idt();
     /*intialize the rtc*/
-    //init_rtc();
+    init_rtc();
 
     /* Init the keyboard for interrupts */
     init_keyboard();
