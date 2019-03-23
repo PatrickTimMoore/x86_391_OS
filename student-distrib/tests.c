@@ -3,6 +3,7 @@
 #include "lib.h"
 #include "rtc_handler.h"
 
+
 #define PASS 1
 #define FAIL 0
 
@@ -282,8 +283,8 @@ void rtc_driver_test(){
 	uint32_t freq = 2;		
 	//open the rtc
 	rtc_open(NULL);
-	//we will check the frequency from 2 to 256
-	for (loop=0; loop<8; loop++)		
+	//we will check the frequency from 2 to 1024
+	for (loop=0; loop<10; loop++)		
 	{
 		//clear the screen
         clear();
@@ -301,7 +302,9 @@ void rtc_driver_test(){
 		//update the frequency
 		freq= freq * 2;
 		count_bound=count_bound*2;
-		rtc_write(0, &freq, 4);		
+		rtc_write(0, &freq, 4);	
+		//put the cursor back to the upper left corner
+		set_cursor_pos(0, 0);	
 	}
 }
 

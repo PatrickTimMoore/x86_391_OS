@@ -28,6 +28,15 @@ int8_t* strncpy(int8_t* dest, const int8_t*src, uint32_t n);
 int32_t bad_userspace_addr(const void* addr, int32_t len);
 int32_t safe_strncpy(int8_t* dest, const int8_t* src, int32_t n);
 void test_interrupts(void);
+
+/*helper functions for keyboard and terminal*/
+void set_cursor_pos(int32_t x, int32_t y);
+void scroll_screen_up();
+void backspace_helper();
+
+
+
+
 /* Port read functions */
 /* Inb reads a byte and returns its value as a zero-extended 32-bit
  * unsigned int */
