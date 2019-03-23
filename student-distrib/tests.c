@@ -2,6 +2,7 @@
 #include "x86_desc.h"
 #include "lib.h"
 #include "rtc_handler.h"
+#include "keyboard_handler.h"
 
 
 #define PASS 1
@@ -268,8 +269,8 @@ int invalid_paging_tests_byte(char* a){
    rtc_read and rtc_write() all work correctly
  * Inputs: None
  * Outputs: None
- * Side Effects: we will see that the message "read rtc correctly" 
- * appears on the screen
+ * Side Effects: we will see that the '1'
+ * appears on the screen with different frequencies
  */
 void rtc_driver_test(){
 
@@ -307,6 +308,26 @@ void rtc_driver_test(){
 		set_cursor_pos(0, 0);	
 	}
 }
+
+
+/*
+ * Description: Test if the terminal_read and terminal_write
+ * work correctly.
+ * Inputs: None
+ * Outputs: None
+ * Side Effects: we will see the texts are echoed back
+ * when an enter key is hit
+ */
+void terminal_driver_test(){
+    uint8_t buf[200];
+    terminal_open(0);
+    while(1){
+        terminal_read (0, buf, 200);
+        terminal_write (0, buf, 200);
+    }
+    terminal_close(0);
+}
+
 
 
 /* Checkpoint 3 tests */
