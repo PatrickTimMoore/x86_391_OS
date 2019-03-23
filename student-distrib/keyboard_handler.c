@@ -383,6 +383,3 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
 	return bytes_written;
 }
 
-
-/* Potential bug, what if '\n' is manually typed into termainal and not enter?
- enter is what we should search for in the end of the line for terminal_read */
