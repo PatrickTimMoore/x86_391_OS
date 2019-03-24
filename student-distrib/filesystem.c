@@ -192,7 +192,7 @@ int32_t read_data(uint32_t inode_idx, uint32_t offset, uint8_t* buf, uint32_t le
 /* Function: int32_t read_file
 *  Description:
 *  Inputs:
-*           * fd - currently unused                 (!!)
+*           * fd - currently unused
 *           * buf - the buffer to return the read data in
 *           * nbytes - number of bytes to put into buf
 *  Outputs:
@@ -268,13 +268,12 @@ int32_t open_file(const uint8_t* filename){
 }
 
 
-// !!!!!
 /* Function: int32_t close_file
 *  Description: Closes file denoted by fd.
 *  Inputs: fd - currently nothing...                        (!!)
 *  Outputs: 0 for success and -1 for failure
 *  Effects: Changes currfile
-*  Issues: Not correct. this should check if:
+*  Issues: This should eventually check if:
 *           1. the file descriptor is valid
 *           2. if the file is open
 *           3. if the file is being read
@@ -402,7 +401,7 @@ int32_t open_dir(const uint8_t* filename){
 *  Inputs: Unused fd, we only have one directory in a flat fs
 *  Outputs: 0 for success (and -1 for failure eventually)
 *  Effects: Changes currdir
-*  Issues: Should check if the directory is actually open no?
+*  Issues: Should check if the directory is actually open
 */
 int32_t close_dir(int32_t fd){
 	currdir.open = 0;
