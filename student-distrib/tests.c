@@ -41,6 +41,16 @@
 //number of exception used
 #define EXCEPTION_NUM               32
 
+//Constants for file_name and file data tests
+#define FILE_CHAR_NUM 				32
+#define FILE_CHAR_PLUS_1			33
+#define TEST_BUF_SIZE				200
+#define ARB_BYTE_NUM				30
+
+//RTC testing constants
+#define RTC_BUF_SIZE				200
+
+
 
 
 static inline void assertion_failure(){
@@ -320,11 +330,11 @@ void rtc_driver_test(){
  * when an enter key is hit
  */
 void terminal_driver_test(){
-    uint8_t buf[200];
+    uint8_t buf[RTC_BUF_SIZE];
     terminal_open(0);
     while(1){
-        terminal_read (0, buf, 200);
-        terminal_write (0, buf, 200);
+        terminal_read (0, buf, RTC_BUF_SIZE);
+        terminal_write (0, buf, RTC_BUF_SIZE);
     }
     terminal_close(0);
 }
@@ -334,47 +344,14 @@ void terminal_driver_test(){
 
 //verylargetextwithverylongname.tx
 
-// int filesys_tests(){
-// 	uint8_t temp;
-// 	int i;
-// 	printf("starting filesystem tests:\n" );
-// 	printf("making string:\n" );
-// 	char file_str[] = "frame0.txt";
-// 	printf("initializing host dentry\n" );
-// 	dentry_t d;
-// 	printf("calling read_dentry_by_name:\n" );
-// 	if(!read_dentry_by_name(file_str, &d)){
-// 		printf("reading by fname found\n");
-// 		temp = d.file_name[31];
-// 		d.file_name[31] = '\0';
-// 		printf("File name: %s, File type: %d, Inode: %d----------------\n", d.file_name, d.file_type, d.inode_num);
-// 		d.file_name[31] = temp;
-// 	}	
-// 	else{
-// 		printf("Failed reading by fname\n");
-// 		return FAIL;
-// 	}
 
-// 	uint8_t buf[4];
-// 	buf[0] = 1;
-// 	buf[1] = 2;
-// 	buf[2] = 3;
-// 	buf[3] = 4;
-// 	if(!read_data(d.inode_num, 0, buf, 4)){
-// 		printf("%s\n", "Read success! Here is what was read:" );
-// 		for(i = 0; i < 4; i++){
-// 			printf("0x%c,", buf[i]);
-// 		}
-// 		printf("%s\n", "<-----------------BYTES" );
-// 	}
-// 	else{
-// 		printf("%s\n", "Data read unsuccessful.");
-// 		return FAIL;
-// 	}
-
-// 	return 0;
-// }
-
+/* ()
+ * 
+ * Description: 
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ */
 int filesys_tests_dir_read(){
 	// clear();
 	int i, byt;
@@ -385,11 +362,11 @@ int filesys_tests_dir_read(){
 		printf("Could not open .\n");
 		return FAIL;
 	}
-	uint8_t buf[33];
+	uint8_t buf[FILE_CHAR_PLUS_1];
 
 	byt = 1;
 	while(byt){
-		byt = read_dir(0, (void *)buf, 32);
+		byt = read_dir(0, (void *)buf, FILE_CHAR_NUM);
 		if(byt != -1){
 			// printf("3rd Read success (%d bytes read)! Here is what was read:\n", byt);
 			for(i = 0; i < byt; i++){
@@ -409,10 +386,17 @@ int filesys_tests_dir_read(){
 	return PASS;
 }
 
+/* ()
+ * 
+ * Description: 
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ */
 int filesys_fail_cases(){
 	// clear();
 	// int i, byt;
-	uint8_t buf[33];
+	uint8_t buf[FILE_CHAR_PLUS_1];
 	char file_str[] = "a";
 	char file_str2[] = ".";
 	char file_str3[] = "rtc";
@@ -442,7 +426,7 @@ int filesys_fail_cases(){
 		return FAIL;
 	}
 
-	if(read_file(0, (void*)buf, 32) != -1){
+	if(read_file(0, (void*)buf, FILE_CHAR_NUM) != -1){
 		printf("Was able to read without opening.\n");
 		return FAIL;
 	}
@@ -450,17 +434,17 @@ int filesys_fail_cases(){
 		printf("Could not open.\n");
 		return FAIL;
 	}
-	if(read_file(0, NULL, 32) != -1){
+	if(read_file(0, NULL, FILE_CHAR_NUM) != -1){
 		printf("Was able to pass NULL pointer.\n");
 		return FAIL;
 	}
 
-	if(read_file(0, NULL, -32) != -1){
+	if(read_file(0, NULL, -FILE_CHAR_NUM) != -1){
 		printf("Was able to pass negative number of bytes to read.\n");
 		return FAIL;
 	}
 
-	if(read_dir(0, (void*)buf, 32) != -1){
+	if(read_dir(0, (void*)buf, FILE_CHAR_NUM) != -1){
 		printf("Was able to read without opening.\n");
 		return FAIL;
 	}
@@ -468,22 +452,22 @@ int filesys_fail_cases(){
 		printf("Could not open.\n");
 		return FAIL;
 	}
-	if(read_dir(0, NULL, 32) != -1){
+	if(read_dir(0, NULL, FILE_CHAR_NUM) != -1){
 		printf("Was able to pass NULL pointer.\n");
 		return FAIL;
 	}
-	if(read_dir(0, NULL, -32) != -1){
+	if(read_dir(0, NULL, -FILE_CHAR_NUM) != -1){
 		printf("Was able to pass negative number of bytes to read.\n");
 		return FAIL;
 	}
 
 	close_file(0);
 	close_dir(0);
-	if(read_file(0, buf, 32) != -1){
+	if(read_file(0, buf, FILE_CHAR_NUM) != -1){
 		printf("Was able to read without opening.\n");
 		return FAIL;
 	}
-	if(read_dir(0, buf, 32) != -1){
+	if(read_dir(0, buf, FILE_CHAR_NUM) != -1){
 		printf("Was able to read without opening.\n");
 		return FAIL;
 	}
@@ -491,9 +475,13 @@ int filesys_fail_cases(){
 	return PASS;
 }
 
-
-
-
+/* ()
+ * 
+ * Description: 
+ * Inputs: int nbytes: the number of bytes to read per entry
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ */
 int filesys_tests_dir_read_partial(int nbytes){
 	// clear();
 	int i, byt;
@@ -504,7 +492,7 @@ int filesys_tests_dir_read_partial(int nbytes){
 		printf("Could not open .\n");
 		return FAIL;
 	}
-	uint8_t buf[33];
+	uint8_t buf[FILE_CHAR_PLUS_1];
 
 	byt = 1;
 	while(byt){
@@ -528,6 +516,13 @@ int filesys_tests_dir_read_partial(int nbytes){
 	return PASS;
 }
 
+/* ()
+ * 
+ * Description: 
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ */
 int filesys_file_driver_basic(){
 	// clear();
 	int i, byt;
@@ -540,12 +535,12 @@ int filesys_file_driver_basic(){
 		printf("Failed to open\n");
 		return FAIL;
 	}
-	uint8_t buf[200];
+	uint8_t buf[TEST_BUF_SIZE];
 	byt = 1;
 	// printf("Opened file\n", byt);
 	while(byt){
 		// printf("Reading from file\n", byt);
-		byt = read_file(0, (void *)buf, 30);
+		byt = read_file(0, (void *)buf, ARB_BYTE_NUM);
 		if(byt != -1){
 			// printf("Read success (%d bytes read)! Here is what was read:\n", byt);
 			for(i = 0; i < byt; i++){
@@ -560,7 +555,7 @@ int filesys_file_driver_basic(){
 		}
 	}
 	// read_file((void *)buf, 4);
-	printf("Done reading, check screen to see what was read to verify correctness\n");
+	// printf("Done reading, check screen to see what was read to verify correctness\n");
 	close_file(0);
 
 
@@ -575,7 +570,7 @@ int filesys_file_driver_basic(){
 	// printf("Opened file\n", byt);
 	while(byt){
 		// printf("Reading from file\n", byt);
-		byt = read_file(0, (void *)buf, 30);
+		byt = read_file(0, (void *)buf, ARB_BYTE_NUM);
 		if(byt != -1){
 			// printf("Read success (%d bytes read)! Here is what was read:\n", byt);
 			for(i = 0; i < byt; i++){
@@ -597,7 +592,13 @@ int filesys_file_driver_basic(){
 }
 
 
-
+/* ()
+ * 
+ * Description: 
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ */
 int filesys_file_driver_noclose(){
 	int i, byt;
 	// clear();
@@ -609,12 +610,12 @@ int filesys_file_driver_noclose(){
 		printf("Failed to open\n");
 		return FAIL;
 	}
-	uint8_t buf[200];
+	uint8_t buf[TEST_BUF_SIZE];
 	byt = 1;
 	// printf("Opened file\n", byt);
 	while(byt){
 		// printf("Reading from file\n", byt);
-		byt = read_file(0, (void *)buf, 30);
+		byt = read_file(0, (void *)buf, ARB_BYTE_NUM);
 		if(byt != -1){
 			// printf("Read success (%d bytes read)! Here is what was read:\n", byt);
 			for(i = 0; i < byt; i++){
@@ -644,7 +645,7 @@ int filesys_file_driver_noclose(){
 	// printf("Opened file\n", byt);
 	while(byt){
 		// printf("Reading from file\n", byt);
-		byt = read_file(0, (void *)buf, 30);
+		byt = read_file(0, (void *)buf, ARB_BYTE_NUM);
 		if(byt != -1){
 			// printf("Read success (%d bytes read)! Here is what was read:\n", byt);
 			for(i = 0; i < byt; i++){
@@ -666,6 +667,13 @@ int filesys_file_driver_noclose(){
 
 }
 
+/* ()
+ * 
+ * Description: 
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ */
 int filesys_file_driver_exec(){
 	int i, byt;
 	// clear();
@@ -677,12 +685,12 @@ int filesys_file_driver_exec(){
 		printf("Failed to open\n");
 		return FAIL;
 	}
-	uint8_t buf[200];
+	uint8_t buf[TEST_BUF_SIZE];
 	byt = 1;
 	// printf("Opened file\n", byt);
 	while(byt){
 		// printf("Reading from file\n", byt);
-		byt = read_file(0, (void *)buf, 30);
+		byt = read_file(0, (void *)buf, ARB_BYTE_NUM);
 		if(byt != -1){
 			// printf("Read success (%d bytes read)! Here is what was read:\n", byt);
 			for(i = 0; i < byt; i++){
@@ -702,13 +710,19 @@ int filesys_file_driver_exec(){
 	return PASS;
 }
 
-
+/* ()
+ * 
+ * Description: 
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ */
 int filesys_file_driver_raw(){
 	int i, byt;
 	// clear();
 	printf("filesys_file_driver_raw\n");
 	char file_str2[] = "hello";
-	uint8_t buf[200];
+	uint8_t buf[TEST_BUF_SIZE];
 	printf("Reading from hello...\n");
 	if(open_file((uint8_t*)file_str2) == -1){
 		printf("Failed to open\n");
@@ -720,7 +734,7 @@ int filesys_file_driver_raw(){
 	// printf("Opened file\n", byt);
 	while(byt){
 		// printf("Reading from file\n", byt);
-		byt = read_file(0, (void *)buf, 30);
+		byt = read_file(0, (void *)buf, ARB_BYTE_NUM);
 		if(byt != -1){
 			// printf("Read success (%d bytes read)! Here is what was read:\n", byt);
 			for(i = 0; i < byt; i++){
@@ -742,7 +756,7 @@ int filesys_file_driver_raw(){
 
 	// printf("filesys_file_driver_raw\n");
 	char file_str[] = "ls";
-	// uint8_t buf[200];
+	// uint8_t buf[TEST_BUF_SIZE];
 	printf("Reading from ls...\n");
 	if(open_file((uint8_t*)file_str) == -1){
 		printf("Failed to open\n");
@@ -754,7 +768,7 @@ int filesys_file_driver_raw(){
 	// printf("Opened file\n", byt);
 	while(byt){
 		// printf("Reading from file\n", byt);
-		byt = read_file(0, (void *)buf, 30);
+		byt = read_file(0, (void *)buf, ARB_BYTE_NUM);
 		if(byt != -1){
 			// printf("Read success (%d bytes read)! Here is what was read:\n", byt);
 			for(i = 0; i < byt; i++){
@@ -775,13 +789,19 @@ int filesys_file_driver_raw(){
 	return PASS;
 }
 
-
+/* ()
+ * 
+ * Description: 
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ */
 int filesys_file_driver_long(){
 	int i, byt;
 	// clear();
 	printf("filesys_file_driver_long\n");
 	char file_str2[] = "verylargetextwithverylongname.tx";
-	uint8_t buf[200];
+	uint8_t buf[TEST_BUF_SIZE];
 	printf("Reading from verylargetextwithverylongname.tx...\n");
 	if(open_file((uint8_t*)file_str2) == -1){
 		printf("Failed to open\n");
@@ -792,7 +812,7 @@ int filesys_file_driver_long(){
 	// printf("Opened file\n", byt);
 	while(byt){
 		// printf("Reading from file\n", byt);
-		byt = read_file(0, (void *)buf, 30);
+		byt = read_file(0, (void *)buf, ARB_BYTE_NUM);
 		if(byt != -1){
 			// printf("Read success (%d bytes read)! Here is what was read:\n", byt);
 			for(i = 0; i < byt; i++){
@@ -811,7 +831,13 @@ int filesys_file_driver_long(){
 	return PASS;
 }
 
-
+/* ()
+ * 
+ * Description: 
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ */
 int filesys_file_list(){
 	// clear();
 	int i, byt;
@@ -824,18 +850,18 @@ int filesys_file_list(){
 		printf("Could not open .\n");
 		return FAIL;
 	}
-	uint8_t buf[33];
+	uint8_t buf[FILE_CHAR_PLUS_1];
 	// uint8_t buf2print[80];
 
 	byt = 1;
 	while(byt){
-		byt = read_dir(0, (void *)buf, 33);
+		byt = read_dir(0, (void *)buf, FILE_CHAR_PLUS_1);
 		if(!byt){break;}
 		if(byt != -1){
 			// printf("File Name%s\n", buf);
 			read_dentry_by_name(buf, &d);
 			printf("file name: %s", buf);
-			for (i = 0; i < 33 - strlen((int8_t*)buf); ++i){
+			for (i = 0; i < FILE_CHAR_PLUS_1 - strlen((int8_t*)buf); ++i){
 				printf(" ");
 			}
 			printf("file type: %d, file size: %d\n", d.file_type, inodes[d.inode_num].len_b);
@@ -872,30 +898,32 @@ void launch_tests(){
 
 	//checkpoint2 test
 	rtc_driver_test();
+	clear();
+	set_cursor_pos(0,0);
 
-	TEST_OUTPUT("filesys_file_driver_basic", filesys_file_driver_basic());
+	// TEST_OUTPUT("filesys_file_driver_basic", filesys_file_driver_basic());
 	// filesys_file_driver_basic();
 
-	TEST_OUTPUT("filesys_file_driver_noclose",filesys_file_driver_noclose());
+	// TEST_OUTPUT("filesys_file_driver_noclose",filesys_file_driver_noclose());
 	// filesys_file_driver_noclose();
 
-	TEST_OUTPUT("filesys_file_driver_exec",filesys_file_driver_exec());
+	// TEST_OUTPUT("filesys_file_driver_exec",filesys_file_driver_exec());
 	// filesys_file_driver_exec();
 
-	TEST_OUTPUT("filesys_file_driver_raw",filesys_file_driver_raw());
+	// TEST_OUTPUT("filesys_file_driver_raw",filesys_file_driver_raw());
 	// filesys_file_driver_raw();
 
-	TEST_OUTPUT("filesys_file_driver_long",filesys_file_driver_long());
+	// TEST_OUTPUT("filesys_file_driver_long",filesys_file_driver_long());
 	// filesys_file_driver_long();
 
-	TEST_OUTPUT("filesys_tests_dir_read",filesys_tests_dir_read());
+	// TEST_OUTPUT("filesys_tests_dir_read",filesys_tests_dir_read());
 	// filesys_tests_dir_read();
 
-	TEST_OUTPUT("filesys_tests_dir_read_partial(6)", filesys_tests_dir_read_partial(6));
+	// TEST_OUTPUT("filesys_tests_dir_read_partial(6)", filesys_tests_dir_read_partial(6));
 	// filesys_tests_dir_read_partial(6);
 
 	TEST_OUTPUT("filesys_fail_cases",filesys_fail_cases());
-	
+
 	TEST_OUTPUT("filesys_file_list",filesys_file_list());
 
 
