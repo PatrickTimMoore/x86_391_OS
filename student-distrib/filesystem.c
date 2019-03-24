@@ -3,16 +3,17 @@
 #include "lib.h"
 
 
+/*
 int32_t hasEOS(const int8_t* s1, int len);
 
 //helper
 
-/* Function:
-*  Description:
-*  inputs: none
-*  outputs: 0 for success and -1 for failure
-*  effects:
-*/
+// Function:
+//  Description:
+//  inputs: none
+//  outputs: 0 for success and -1 for failure
+//  effects:
+//
 int32_t hasEOS(const int8_t* s1, int len) {
     int32_t i;
     for (i = 0; i < len; ++i)
@@ -23,7 +24,7 @@ int32_t hasEOS(const int8_t* s1, int len) {
     }
     return -1;
 }
-
+*/
 
 /* Function: int32_t init_filesys_addr
 *  Description: Called in order to initialize the filesystem.
@@ -43,15 +44,14 @@ int32_t init_filesys_addr(uint32_t b_addr){
 	// 	boot_block_ptr->inode_count, 
 	// 	boot_block_ptr->datablock_count);
 
-
-	//512*8 = 4096 hence 4KB worth of addresses
-	// inodes = (inode_t*)(((uint32_t)b_addr) + 4096);
-	// inodes = (inode_t*) (((uint32_t)b_addr) + sizeof(boot_block_t));
+	// inodes are located at the first 4kb block after the boot block -LLY
 	inodes = (inode_t*) (boot_block_ptr + 1);
 
-	// datas = (data_block_t*)(((uint32_t)inodes) + ((boot_block_ptr->inode_count)*4096));
+    // data blocks begin after the Nth (N equal to inode_count) 4kb inode block --LLY
 	datas = (data_block_t*) (inodes + (boot_block_ptr->inode_count));
 
+    /* initialization of currfile and currdir, where no files
+     * nor directories are initially open or read -LLY */
 	currfile.open = 0;
 	currfile.bytes_read = 0;
 
@@ -66,58 +66,37 @@ int32_t init_filesys_addr(uint32_t b_addr){
 *  Description: Finds directory entry by given filename.
 *  Inputs:
 *           * fname - name of file to find
-*           * dentry - dentry struct to fill with file info
+*           * dentry_ret - dentry struct to fill with file info
 *  Outputs:
 *           * 0 for success and -1 for failure
 *           * dentry struct filled out (is this an "output" or an effect?)
 *  Effects: Changes dentry struct
 */
-int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry){
-	// printf("Reminder: We have %d dentries, %d inodes, 
-	// 	and %d data blocks.\n", 
-	// 	boot_block_ptr->dentry_count, 
-	// 	boot_block_ptr->inode_count, 
-	// 	boot_block_ptr->datablock_count);
+int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry_ret){
+	int i;          // tracks current dentry idx; for loop ctr
+	dentry_t d;     // holds current dentry
 
-	//were we passed a nullptr?
-	if(!dentry){return -1;}
+	// check for nullptr -LLY
+	if(dentry_ret == NULL)
+	    return -1;
 
-	//is our name even valid?
-	if(strlen((int8_t*)fname) > 32){return -1;}
-
-	// printf("read_dentry_by_name! Initializing variables...\n");
-
-	int i, len;
-	dentry_t d;
-
-	// printf("read_dentry_by_name (%s)! Entering loop...\n", fname);
+	// check if fname given is even possible -LLY
+	if(strlen((int8_t*) fname) > MAX_FNAME_LEN)
+	    return -1;
 
 	// NUMFILES searches all 63, dentry_count only what is required
 	for(i = 0; i < boot_block_ptr->dentry_count; i++){
 		d = boot_block_ptr->dentries[i];
 
-		// Pick the correct amount of characters to compare because
-		// of 1 goddamn EoS case
-		// Like srsly just limit all names to 31 wtf saves computation
-		if(hasEOS((int8_t*)d.file_name, 32) == -1){
-			len = 32;
-		}
-		else if(strlen((int8_t*)d.file_name) != strlen((int8_t*)fname)){
-			continue;
-		}
-		else{
-			len = strlen((int8_t*)fname);
-		}
-
-		if(!strncmp((int8_t*)fname, (int8_t*)d.file_name, len)){
-			// printf("read_dentry_by_name MATCH!!! memcpy...\n");
-			//get exactly as many bytes as needed
-			strncpy((int8_t*)dentry->file_name, (int8_t*)d.file_name, 32);
-			dentry->file_type = d.file_type;
-			dentry->inode_num = d.inode_num;
+        // we may run the risk of buffer overflow or overrun, must be double checked -LLY
+        if (strncmp((int8_t *) fname, (int8_t *) d.file_name, MAX_FNAME_LEN) == 0){
+			// we don't copy from (int8_t*)d.file_name as the source because it is not nul-terminated -LLY
+			strncpy((int8_t *) dentry_ret->file_name, (int8_t *) fname, MAX_FNAME_LEN);
+			dentry_ret->file_type = d.file_type;
+			dentry_ret->inode_num = d.inode_num;
 
 			return 0;
-		}
+        }
 	}
 	printf("read_dentry_by_name failed.\n");
 	return -1;
@@ -127,27 +106,29 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry){
 *  Description: Finds directory entry by index.
 *  Inputs:
 *           * index - index of file to find
-*           * dentry - dentry struct to fill with file info
+*           * dentry_ret - dentry struct to fill with file info
 *  Outputs:
 *           * 0 for success and -1 for failure
 *           * dentry struct filled out (is this an "output" or an effect?)
 *  Effects: Changes dentry struct
 */
-int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry){
-	//were we passed a nullptr?
-	if(!dentry){return -1;}
+int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry_ret){
+	dentry_t d; // holds the found dentry at index
 
-	//Check for out of bounds!
-	if(index < 0 || index >= boot_block_ptr->dentry_count){return -1;}
+	// check for nullptr -LLY
+	if (dentry_ret == NULL)
+	    return -1;
 
-	// printf("read_dentry_by_index! Initializing variables...\n");
-	// int i;
-	dentry_t d;
+	// check if proper index given -LLY
+	if (index < 0 || index >= boot_block_ptr->dentry_count)
+	    return -1;
 
+    // get and copy dentry information
 	d = boot_block_ptr->dentries[index];
-	strncpy((int8_t*)dentry->file_name, (int8_t*)d.file_name, 32);
-	dentry->file_type = d.file_type;
-	dentry->inode_num = d.inode_num;
+
+	strncpy((int8_t*)dentry_ret->file_name, (int8_t*) d.file_name, MAX_FNAME_LEN);
+	dentry_ret->file_type = d.file_type;
+	dentry_ret->inode_num = d.inode_num;
 
 	return 0;
 }
@@ -155,7 +136,7 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry){
 /* Function: int32_t read_data
 *  Description: Reads data from inode of a certain length from offset start point
 *  Inputs:
-*           * inode - index node of file to get data from
+*           * inode_idx - index node index of file to get data from
 *           * offset - from where in the file to start reading
 *           * buf - the buffer to fill                          (?? should we check this further?)
 *           * length - the amount of data to read into buf      (?? is amount the correct word?)
@@ -163,38 +144,47 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry){
 *           * number of bytes read or -1 for failure
 *  Effects: buf filled with requested data (?? should we clear buffer if failed?)
 */
-int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
-	inode_t ino;
-	int i;
-	if(inode < 0 || inode >= boot_block_ptr->inode_count){
-		printf("read_data: Out of bounds at %d with limit %d\n", inode, boot_block_ptr->inode_count);
+int32_t read_data(uint32_t inode_idx, uint32_t offset, uint8_t* buf, uint32_t length){
+    int i;          // keeps track of current byte in inode data block
+    int data_id;    // indicates the data block to retrieve some data from
+	inode_t ino;    // keeps track of inode of index inode_idx
+
+    // check for nullptr -LLY
+	if(buf == NULL)
+	    return -1;
+
+	// check if valid inode idx -LLY
+	if(inode_idx < 0 || inode_idx >= boot_block_ptr->inode_count){
+		printf("read_data: Out of bounds at %d with limit %d\n", inode_idx, boot_block_ptr->inode_count);
 		return -1;
 	}
 
-	if(!buf){return -1;}
+	// Get our inode
+	ino = inodes[inode_idx];
 
-	//Get our inode
-	ino = inodes[inode];
-	// printf("read_data: We have %d possible bytes\n", ino.len_b);
-
+    // check if offset is valid
 	if(offset > ino.len_b){
-		printf("%s (we have %d)\n", "read_data: we don't have that many bytes go away\n", ino.len_b);
+		printf("read_data: Out of bounds at %d offset, limit is %d len\n", offset, ino.len_b);
 		return -1;
 	}
 
 	for(i = offset; i < offset+length && i < ino.len_b; i++){
-		//i/4096 <--- Which 4KB block?
-		//i%4096 <--- Which byte of the 4KB?
-
-		if(ino.data_ids[i/4096] < 0 || ino.data_ids[i/4096] >= boot_block_ptr->datablock_count ){
+		// (i/BLOCK_SIZE) <--- Which 4KB block?
+        data_id = ino.data_ids[i/BLOCK_SIZE];
+        // check to see if valid data_blocks are being encountered,
+        //      datablocks being between [0, datablock_count)               -LLY
+		if(data_id < 0 || data_id >= boot_block_ptr->datablock_count ){
+		    // might want to clear buf if security was of utmost importance here, with a function -LLY
 			printf("read_data: invalid data block index found\n");
 			return -1;
 		}
 
-		buf[i-offset] = datas[ino.data_ids[i/4096]].data[i%4096];
+		// (i%BLOCK_SIZE) <--- Which byte of the 4KB?
+		buf[i - offset] = datas[data_id].data[i%BLOCK_SIZE];
 		//^ take a second on this line
 	}
 
+    // return total number of bytes read into buf
 	return i - offset;
 }
 
@@ -220,7 +210,7 @@ int32_t read_file(int32_t fd, void* buf, int32_t nbytes){
 		printf("%s\n", "read_file ERROR: No file currently open!\n");
 		return -1;
 	}
-	if(!buf){
+	if(buf == NULL){
 		printf("%s\n", "read_file ERROR: Buffer passed was NULL!\n");
 		return -1;
 	}
@@ -234,7 +224,8 @@ int32_t read_file(int32_t fd, void* buf, int32_t nbytes){
 	if(ret == -1){
 		printf("%s\n", "read_file ERROR: Read failed\n");
 	}
-	currfile.bytes_read += ret;
+	else
+	    currfile.bytes_read += ret;
 
 	return ret;
 }
@@ -315,7 +306,7 @@ int32_t read_dir(int32_t fd, void* buf, int32_t nbytes){
 		printf("%s\n", "read_dir ERROR: No dir currently open!\n");
 		return -1;
 	}
-	if(!buf){
+	if(buf == NULL){
 		printf("%s\n", "read_dir ERROR: Buffer passed was NULL!\n");
 		return -1;
 	}

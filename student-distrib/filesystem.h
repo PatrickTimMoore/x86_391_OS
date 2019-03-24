@@ -15,6 +15,11 @@
 #define INODE_ADDR		BOOT_BLOCK_ADDR + FOURKB_BYTES
 #define BYTES_IN_4KB	4096
 
+#define MAX_FNAME_LEN   32
+#define BLOCK_SIZE      4096
+#define NULL            0
+
+
 typedef struct dentry{
 	uint8_t file_name[FNAME_LEN];
 	uint32_t file_type;
