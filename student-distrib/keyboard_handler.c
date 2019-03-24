@@ -350,7 +350,6 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
 }
 
 
-
 /*
  ** int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes)
  ** Inputs: fd -- file descriptor, buf -- buffer used to write to the screen
@@ -380,6 +379,18 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
 		putc(buf_uint[loop]);
 		bytes_written++;
 	}
+  loop=0;
+  while(keyboard_buffer[loop] != NULL){
+      if(keyboard_buffer[loop] == '\n'){
+          putc(keyboard_buffer[loop++]);
+          uint8_t bufNew[200];
+          terminal_open(0);
+          terminal_read(0, bufNew, 200);
+          bytes_written += terminal_write(0, bufNew, 200);
+          terminal_close(0);
+          break;
+      }
+      putc(keyboard_buffer[loop++]);
+  }
 	return bytes_written;
 }
-
