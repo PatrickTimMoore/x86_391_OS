@@ -12,6 +12,8 @@
 #include "rtc_handler.h"
 #include "keyboard_handler.h"
 #include "paging.h"
+#include "filesystem.h"
+
 
 #define RUN_TESTS
 
@@ -68,6 +70,11 @@ void entry(unsigned long magic, unsigned long addr) {
             mod++;
         }
     }
+
+
+    //INITIALIZE FILESYSTEM BEFORE PAGING
+    init_filesys_addr((unsigned int)(((module_t*)mbi->mods_addr)->mod_start));
+
     /* Bits 4 and 5 are mutually exclusive! */
     if (CHECK_FLAG(mbi->flags, 4) && CHECK_FLAG(mbi->flags, 5)) {
         printf("Both bits 4 and 5 are set.\n");
