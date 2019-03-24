@@ -25,11 +25,14 @@ int32_t hasEOS(const int8_t* s1, int len) {
 }
 
 
-/* Function:
-*  Description:
-*  inputs: none
-*  outputs: 0 for success and -1 for failure
-*  effects:
+/* Function: int32_t init_filesys_addr
+*  Description: Called in order to initialize the filesystem.
+*  Inputs: b_addr - the address of the start of the boot block
+*  Outputs: 0 for success and -1 for failure
+*  Effects:
+*       * Sets boot_block_ptr to the given address,
+*       * Determines the start locations of the inode and data blocks
+*       * Initializes structs for keeping track of opened files and dirs
 */
 int32_t init_filesys_addr(uint32_t b_addr){
 	boot_block_ptr = (boot_block_t*)b_addr;
@@ -59,11 +62,15 @@ int32_t init_filesys_addr(uint32_t b_addr){
 }
 
 
-/* Function:
-*  Description:
-*  inputs: none
-*  outputs: 0 for success and -1 for failure
-*  effects:
+/* Function: int32_t read_dentry_by_name
+*  Description: Finds directory entry by given filename.
+*  Inputs:
+*           * fname - name of file to find
+*           * dentry - dentry struct to fill with file info
+*  Outputs:
+*           * 0 for success and -1 for failure
+*           * dentry struct filled out (is this an "output" or an effect?)
+*  Effects: Changes dentry struct
 */
 int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry){
 	// printf("Reminder: We have %d dentries, %d inodes, 
@@ -116,11 +123,15 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry){
 	return -1;
 }
 
-/* Function:
-*  Description:
-*  inputs: none
-*  outputs: 0 for success and -1 for failure
-*  effects:
+/* Function: int32_t read_dentry_by_index
+*  Description: Finds directory entry by index.
+*  Inputs:
+*           * index - index of file to find
+*           * dentry - dentry struct to fill with file info
+*  Outputs:
+*           * 0 for success and -1 for failure
+*           * dentry struct filled out (is this an "output" or an effect?)
+*  Effects: Changes dentry struct
 */
 int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry){
 	//were we passed a nullptr?
@@ -141,11 +152,16 @@ int32_t read_dentry_by_index(uint32_t index, dentry_t* dentry){
 	return 0;
 }
 
-/* Function:
-*  Description:
-*  inputs: none
-*  outputs: 0 for success and -1 for failure
-*  effects:
+/* Function: int32_t read_data
+*  Description: Reads data from inode of a certain length from offset start point
+*  Inputs:
+*           * inode - index node of file to get data from
+*           * offset - from where in the file to start reading
+*           * buf - the buffer to fill                          (?? should we check this further?)
+*           * length - the amount of data to read into buf      (?? is amount the correct word?)
+*  Outputs:
+*           * number of bytes read or -1 for failure
+*  Effects: buf filled with requested data (?? should we clear buffer if failed?)
 */
 int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
 	inode_t ino;
@@ -179,14 +195,23 @@ int32_t read_data(uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
 		//^ take a second on this line
 	}
 
-	return i-offset;
+	return i - offset;
 }
 
-/* Function:
+
+/* Function: int32_t read_file
 *  Description:
-*  inputs: none
-*  outputs: Number of bytes read; 0 means we've reached the end (or 0 bytes ordered); -1 means error
-*  effects:
+*  Inputs:
+*           * fd - currently unused                 (!!)
+*           * buf - the buffer to return the read data in
+*           * nbytes - number of bytes to put into buf
+*  Outputs:
+*           * Number of bytes read;
+*           * 0 means we've reached the end (or 0 bytes ordered);
+*           * -1 means error
+*  Effects:
+*           * Fills buf with data
+*           * Changes currfile struct
 */
 int32_t read_file(int32_t fd, void* buf, int32_t nbytes){
 	int ret;
@@ -214,21 +239,24 @@ int32_t read_file(int32_t fd, void* buf, int32_t nbytes){
 	return ret;
 }
 
-/* Function: int32_t write(int32_t fd, const void* buf, int32_t nbytes)
-*  Description: Nothing but report a failure! This is read-only filesystem
-*  inputs: none
-*  outputs: 0 for success and -1 for failure
-*  effects:
+/* Function: int32_t write_file
+*  Description: Nothing, we currently have a read-only filesystem
+*  Inputs:
+*           * fd - File descriptor of file we would write to
+*           * buf - buffer that would contain some info to write
+*           * nbytes - the number of bytes we would write to the file
+*  Outputs: -1 for failure
+*  Effects: Nothing
 */
 int32_t write_file(int32_t fd, const void* buf, int32_t nbytes){
 	return -1;
 }
 
-/* Function:
-*  Description:
-*  inputs: none
-*  outputs: 0 for success and -1 for failure
-*  effects:
+/* Function: int32_t open_file
+*  Description: Attempts to open file
+*  Inputs: filename - the filename of the file to open
+*  Outputs: 0 for success and -1 for failure
+*  Effects: Changes currfile struct
 */
 int32_t open_file(const uint8_t* filename){
 	if(		!read_dentry_by_name(filename, &(currfile.dentry))	){
@@ -248,11 +276,17 @@ int32_t open_file(const uint8_t* filename){
 	
 }
 
-/* Function:
-*  Description:
-*  inputs: none
-*  outputs: 0 for success and -1 for failure
-*  effects:
+
+// !!!!!
+/* Function: int32_t close_file
+*  Description: Closes file denoted by fd.
+*  Inputs: fd - currently nothing...                        (!!)
+*  Outputs: 0 for success and -1 for failure
+*  Effects: Changes currfile
+*  Issues: Not correct. this should check if:
+*           1. the file descriptor is valid
+*           2. if the file is open
+*           3. if the file is being read
 */
 int32_t close_file(int32_t fd){
 	currfile.open = 0;
@@ -261,11 +295,16 @@ int32_t close_file(int32_t fd){
 }
 
 
-/* Function:
-*  Description:
-*  inputs: none
-*  outputs: 0 for success and -1 for failure
-*  effects:
+/* Function: int32_t read_dir
+*  Description: Reads from directory.
+*  Inputs:
+*           * fd - the directory's file descriptor
+*           * buf - the buffer to return the data in
+*           * nbytes - the amount of data to read and size of buf
+*  Outputs: Either number of bytes read or -1 for failure
+*  Effects:
+*           * Changes buf
+*           * Changes currdir
 */
 int32_t read_dir(int32_t fd, void* buf, int32_t nbytes){
 	int i; //, ret;
@@ -330,22 +369,22 @@ int32_t read_dir(int32_t fd, void* buf, int32_t nbytes){
 }
 
 
-/* Function:
-*  Description:
-*  inputs: none
-*  outputs: 0 for success and -1 for failure
-*  effects:
+/* Function: int32_t write_dir
+*  Description: Nothing, you can't write to a directory (??)
+*  Inputs: Unused
+*  Outputs: -1 for failure
+*  Effects: Nothing
 */
 int32_t write_dir(int32_t fd, const void* buf, int32_t nbytes){
 	return -1;
 }
 
 
-/* Function:
-*  Description:
-*  inputs: none
-*  outputs: 0 for success and -1 for failure
-*  effects:
+/* Function: int32_t open_dir
+*  Description: Opens directory for reading
+*  Inputs: filename - name of directory to open
+*  Outputs: 0 for success and -1 for failure
+*  Effects: Changes currdir
 */
 int32_t open_dir(const uint8_t* filename){
 	if(		!read_dentry_by_name(filename, &(currdir.dentry))	){
@@ -367,11 +406,12 @@ int32_t open_dir(const uint8_t* filename){
 }
 
 
-/* Function:
-*  Description:
-*  inputs: none
-*  outputs: 0 for success and -1 for failure
-*  effects:
+/* Function: int32_t close_dir
+*  Description: Closes open directory
+*  Inputs: Unused fd, we only have one directory in a flat fs
+*  Outputs: 0 for success (and -1 for failure eventually)
+*  Effects: Changes currdir
+*  Issues: Should check if the directory is actually open no?
 */
 int32_t close_dir(int32_t fd){
 	currdir.open = 0;
