@@ -323,6 +323,12 @@ void rtc_driver_test(){
 		//put the cursor back to the upper left corner
 		set_cursor_pos(0, 0);	
 	}
+	//close the rtc
+	rtc_close(0);
+	//test if we can still read after close
+	if(rtc_read(0, 0, 0) == -1){
+		printf("rtc closes correctly ");
+	}
 }
 
 

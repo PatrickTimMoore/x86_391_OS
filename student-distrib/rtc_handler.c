@@ -88,14 +88,14 @@ int32_t rtc_open(const uint8_t * filename){
  /*
  *  int32_t rtc_read()
  *  inputs: the standard read function: file descriptor, buffer, and size of buffer
- *  return: always return 0
+ *  return: always return 0 for success and -1 for failure
  *  Description: 
  ** This function will block until the next interrupt of RTC happens.
  */
 int32_t rtc_read (int32_t fd, void* buf, int32_t nbytes){
     //check if the RTC is open or not
     if( rtc_open_flag == 0){
-        return 0;
+        return -1;
     }
     //wait until the next interrupt happens
     while (!rtc_interrupt_happened);    
@@ -116,7 +116,7 @@ int32_t rtc_read (int32_t fd, void* buf, int32_t nbytes){
 int32_t  rtc_write(int32_t fd, const void* buf, int32_t nbytes){
     //check if the RTC is open or not
     if( rtc_open_flag == 0){
-        return 0;
+        return -1;
     }
     int32_t ret_val;
     //save the flags and disable the interrupts
