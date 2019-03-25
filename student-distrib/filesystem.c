@@ -324,28 +324,28 @@ int32_t read_dir(int32_t fd, void* buf, int32_t nbytes){
 	if(!read_dentry_by_index(currdir.curr_idx, &d)){ //assuming if this is unsuccessful we're out of files
 
 		// printf("read_dir: Got a dentry, copying file_name-------\n");
-		//accomodate for 32 big
-		uint8_t buf33[33];
-		// buf33[32] = '\n';
+		//accomodate for null character
+		uint8_t tmp_buf[MAX_FNAME_LEN + 1];
+		// tmp_buf[MAX_FNAME_LEN] = '\n';
 
 		//Our own string copy
-		buf33[32] = '\0';
-		for(i = 0; i < 32; i++){
-			buf33[i] = d.file_name[i];
+		tmp_buf[MAX_FNAME_LEN] = '\0';
+		for(i = 0; i < MAX_FNAME_LEN; i++){
+			tmp_buf[i] = d.file_name[i];
 		}
 		// printf("read_dir: Our og name was %s-------\n", d.file_name);
 
-		// printf("read_dir: Our file_name we parsed is %s--------------------\n", buf33);
+		// printf("read_dir: Our file_name we parsed is %s--------------------\n", tmp_buf);
 		// printf("read_dir: Copying name into buffer...\n");
 
 		//Now we have a name to copy over
 		//Make sure to get the \0 also if requested in nbytes
-		for (i = 0; i < nbytes && i < strlen((int8_t*)buf33)+1; i++){
+		for (i = 0; i < nbytes && i < strlen((int8_t*)tmp_buf)+1; i++){
 			// printf("read_dir: Copying byte %d....\n", i);
-			((uint8_t*)buf)[i] = buf33[i];
+			((uint8_t*)buf)[i] = tmp_buf[i];
 		}
 
-		// if(i == 32 && i < nbytes){
+		// if(i == MAX_FNAME_LEN && i < nbytes){
 			// ((uint8_t*)buf)[i] = '\0';
 		// }
 
