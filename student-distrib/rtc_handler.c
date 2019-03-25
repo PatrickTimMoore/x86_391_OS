@@ -15,6 +15,8 @@
 
 //store the state of the RTC interrut
 volatile int rtc_interrupt_happened =0;
+//the flag to indicate the RTC is open
+static int rtc_open_flag = 0;
 
 /* 
  ** int init_rtc()
@@ -74,6 +76,8 @@ void rtc_handler(){
  ** not used.
 */
 int32_t rtc_open(const uint8_t * filename){
+    //mark the flag to indicate the rtc is open
+    rtc_open_flag = 1;
     //change the frequency to defualt value: 2
     int32_t default_freq= 2;
     change_frequency(default_freq);
@@ -89,7 +93,10 @@ int32_t rtc_open(const uint8_t * filename){
  ** This function will block until the next interrupt of RTC happens.
  */
 int32_t rtc_read (int32_t fd, void* buf, int32_t nbytes){
-
+    //check if the RTC is open or not
+    if( rtc_open_flag == 0){
+        return 0;
+    }
     //wait until the next interrupt happens
     while (!rtc_interrupt_happened);    
     // clear the flag for rtc interrupts 
@@ -107,6 +114,10 @@ int32_t rtc_read (int32_t fd, void* buf, int32_t nbytes){
  ** This function tries to set the RTC to desired frequency
  */
 int32_t  rtc_write(int32_t fd, const void* buf, int32_t nbytes){
+    //check if the RTC is open or not
+    if( rtc_open_flag == 0){
+        return 0;
+    }
     int32_t ret_val;
     //save the flags and disable the interrupts
     int32_t flags;   
@@ -134,6 +145,8 @@ int32_t  rtc_write(int32_t fd, const void* buf, int32_t nbytes){
  ** This function does nothing
  */
 int32_t rtc_close(int32_t fd){
+    //clear the rtc open flag
+    rtc_open_flag = 0;
     //always return 0
     return 0;
  }

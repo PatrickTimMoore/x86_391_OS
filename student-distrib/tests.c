@@ -919,8 +919,11 @@ void launch_tests(){
 	//invalid_paging_tests(ZERO_ADDR);
 
 	//checkpoint2 test
+	//test the rtc open, read and write in one function
 	rtc_driver_test();
+	//clear the screen and curosor for later test
 	clear();
+	//put the cursor at the upper left corner
 	set_cursor_pos(0,0);
 
 	// TEST_OUTPUT("filesys_file_driver_basic", filesys_file_driver_basic());
@@ -947,6 +950,7 @@ void launch_tests(){
 	// TEST_OUTPUT("filesys_fail_cases",filesys_fail_cases());
 
 	TEST_OUTPUT("filesys_file_list",filesys_file_list());
+	//test the terminal driver
 	terminal_driver_test();
 
 
