@@ -46,7 +46,7 @@
 #define FILE_CHAR_PLUS_1			33
 #define TEST_BUF_SIZE				200
 #define ARB_BYTE_NUM				30
-
+#define PARTIAL_READS 				6
 //RTC testing constants
 #define RTC_BUF_SIZE				200
 
@@ -809,6 +809,88 @@ int filesys_file_driver_raw(){
 	return PASS;
 }
 
+
+/* filesys_file_driver_raw_partial()
+ * 
+ * Description: Prints 2 raw files as a check that we can read from them partially
+ * Inputs: None
+ * Outputs: PASS/FAIL
+ * Side Effects: None
+ */
+int filesys_file_driver_raw_partial(int sets){
+	int i, byt, set_count;
+	// clear();
+	printf("filesys_file_driver_raw\n");
+	char file_str2[] = "hello";
+	uint8_t buf[TEST_BUF_SIZE];
+	printf("Reading from hello...\n");
+	if(open_file((uint8_t*)file_str2) == -1){
+		printf("Failed to open\n");
+		return FAIL;
+	}
+
+	set_count = 0;
+	byt = 1;
+	// printf("Opened file\n", byt);
+	while(set_count < sets && byt){
+		// printf("Reading from file\n", byt);
+		byt = read_file(0, (void *)buf, ARB_BYTE_NUM);
+		set_count++;
+		if(byt != -1){
+			// printf("Read success (%d bytes read)! Here is what was read:\n", byt);
+			for(i = 0; i < byt; i++){
+				printf("%c", buf[i]);
+			}
+		}
+		else{
+			printf("%s\n", "Data read unsuccessful.");
+			close_file(0);
+			return FAIL;
+		}
+	}
+
+
+
+	printf("\nDone reading, check screen to see what was read to verify correctness\n");
+	close_file(0);
+
+	// printf("filesys_file_driver_raw\n");
+	char file_str[] = "ls";
+	// uint8_t buf[TEST_BUF_SIZE];
+	printf("Reading from ls...\n");
+	if(open_file((uint8_t*)file_str) == -1){
+		printf("Failed to open\n");
+		return FAIL;
+	}
+
+
+	set_count = 0;
+	byt = 1;
+	// printf("Opened file\n", byt);
+	while(set_count < sets && byt){
+		// printf("Reading from file\n", byt);
+		byt = read_file(0, (void *)buf, ARB_BYTE_NUM);
+		set_count++;
+		if(byt != -1){
+			// printf("Read success (%d bytes read)! Here is what was read:\n", byt);
+			for(i = 0; i < byt; i++){
+				printf("%c", buf[i]);
+			}
+			// printf("\n");
+		}
+		else{
+			printf("%s\n", "Data read unsuccessful.");
+			close_file(0);
+			return FAIL;
+		}
+	}
+	printf("\nDone reading, check screen to see what was read to verify correctness\n");
+	close_file(0);
+
+	//Printed both successfully!
+	return PASS;
+}
+
 /* filesys_file_driver_long()
  * 
  * Description: Reads from verylargetextwithverylongname.tx to stress test
@@ -941,15 +1023,17 @@ void launch_tests(){
 	// TEST_OUTPUT("filesys_file_driver_long",filesys_file_driver_long());
 	// filesys_file_driver_long();
 
+	TEST_OUTPUT("filesys_file_driver_raw_partial", filesys_file_driver_raw_partial(PARTIAL_READS));
+
 	// TEST_OUTPUT("filesys_tests_dir_read",filesys_tests_dir_read());
 	// filesys_tests_dir_read();
 
-	// TEST_OUTPUT("filesys_tests_dir_read_partial(6)", filesys_tests_dir_read_partial(6));
-	// filesys_tests_dir_read_partial(6);
+	// TEST_OUTPUT("filesys_tests_dir_read_partial(PARTIAL_READS)", filesys_tests_dir_read_partial(PARTIAL_READS));
+	// filesys_tests_dir_read_partial(PARTIAL_READS);
 
 	// TEST_OUTPUT("filesys_fail_cases",filesys_fail_cases());
 
-	TEST_OUTPUT("filesys_file_list",filesys_file_list());
+	// TEST_OUTPUT("filesys_file_list",filesys_file_list());
 	//test the terminal driver
 	terminal_driver_test();
 
