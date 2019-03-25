@@ -290,10 +290,13 @@ void rtc_driver_test(){
 	//hold the number of 1s to write
 	int count_num;
 	//hold the upper bound of 1s for each frequecy
+	//it starts at four '1's
 	int count_bound=4;
 	//the frequency for RTC
+	//the initial frequency is 2
 	uint32_t freq = 2;		
 	//open the rtc
+	//this will set the intial frequency to 2
 	rtc_open(NULL);
 	//we will check the frequency from 2 to 1024
 	for (loop=0; loop<10; loop++)		
@@ -305,8 +308,9 @@ void rtc_driver_test(){
 		while(count_num < count_bound)
 		{
 			//test the read
-			rtc_read(0,0,0);		
-			//print out the ‘1’ for each interrupt
+			//it will wait until the last interrupt ends
+			rtc_read(0, 0, 0);		
+			//print out the ‘1’ for each interrupt, '1' is used as a testing char
 			putc('1');	
 			//update the count of 1s
 			count_num++;	
@@ -314,6 +318,7 @@ void rtc_driver_test(){
 		//update the frequency
 		freq= freq * 2;
 		count_bound=count_bound*2;
+		//4 means that we will write 4 bytes to RTC
 		rtc_write(0, &freq, 4);	
 		//put the cursor back to the upper left corner
 		set_cursor_pos(0, 0);	
@@ -330,9 +335,12 @@ void rtc_driver_test(){
  * when an enter key is hit
  */
 void terminal_driver_test(){
+	//the buffer is used to test the terminal driver
     uint8_t buf[RTC_BUF_SIZE];
     terminal_open(0);
+    //we will continuously read and write
     while(1){
+    	//we will only read after an enter is hit
         terminal_read (0, buf, RTC_BUF_SIZE);
         terminal_write (0, buf, RTC_BUF_SIZE);
     }
@@ -939,6 +947,7 @@ void launch_tests(){
 	// TEST_OUTPUT("filesys_fail_cases",filesys_fail_cases());
 
 	TEST_OUTPUT("filesys_file_list",filesys_file_list());
+	terminal_driver_test();
 
 
 
