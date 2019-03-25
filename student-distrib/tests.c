@@ -345,14 +345,17 @@ void terminal_driver_test(){
 //verylargetextwithverylongname.tx
 
 
-/* ()
+//TREAT PRINTFs LIKE COMMENTS
+
+/* filesys_tests_dir_read()
  * 
- * Description: 
+ * Description: Tests (just) dir_read until nothing is left
  * Inputs: None
  * Outputs: PASS/FAIL
  * Side Effects: None
  */
 int filesys_tests_dir_read(){
+
 	// clear();
 	int i, byt;
 	printf("Filesys dir read tests\n");
@@ -362,13 +365,19 @@ int filesys_tests_dir_read(){
 		printf("Could not open .\n");
 		return FAIL;
 	}
+
+	//Buffer for our file names
 	uint8_t buf[FILE_CHAR_PLUS_1];
 
 	byt = 1;
-	while(byt){
+	while(byt){ //while we still have files to read
+
+		//Try to read
 		byt = read_dir(0, (void *)buf, FILE_CHAR_NUM);
+
+		//If our read was successful or not
 		if(byt != -1){
-			// printf("3rd Read success (%d bytes read)! Here is what was read:\n", byt);
+			//Print what read in char format
 			for(i = 0; i < byt; i++){
 				printf("%c", buf[i]);
 			}
@@ -382,18 +391,21 @@ int filesys_tests_dir_read(){
 	}
 
 	close_dir(0);
+
+	//We got through it AND closed
 	printf("Done printing, check screen for correctness.\n");
 	return PASS;
 }
 
-/* ()
+/* filesys_fail_cases()
  * 
- * Description: 
+ * Description: Tests that our filesystem driver fails when it must
  * Inputs: None
  * Outputs: PASS/FAIL
  * Side Effects: None
  */
 int filesys_fail_cases(){
+	//See the error messages for corresponding aspect being tested; in other words, let printfs be comments as well.
 	// clear();
 	// int i, byt;
 	uint8_t buf[FILE_CHAR_PLUS_1];
@@ -472,12 +484,13 @@ int filesys_fail_cases(){
 		return FAIL;
 	}
 
+	//We failed every fail case, so we passed. If only ece 391 worked this way.
 	return PASS;
 }
 
-/* ()
+/* filesys_tests_dir_read_partial()
  * 
- * Description: 
+ * Description: Checks that our filesystem reads partial ammounts of characters
  * Inputs: int nbytes: the number of bytes to read per entry
  * Outputs: PASS/FAIL
  * Side Effects: None
@@ -492,13 +505,16 @@ int filesys_tests_dir_read_partial(int nbytes){
 		printf("Could not open .\n");
 		return FAIL;
 	}
+
+	//Buffer for filenames
 	uint8_t buf[FILE_CHAR_PLUS_1];
 
 	byt = 1;
 	while(byt){
+		//Only read partially this time
 		byt = read_dir(0, (void *)buf, nbytes);
 		if(byt != -1){
-			// printf("3rd Read success (%d bytes read)! Here is what was read:\n", byt);
+			//print what we just read
 			for(i = 0; i < byt; i++){
 				printf("%c", buf[i]);
 			}
@@ -516,9 +532,9 @@ int filesys_tests_dir_read_partial(int nbytes){
 	return PASS;
 }
 
-/* ()
+/* filesys_file_driver_basic()
  * 
- * Description: 
+ * Description: Checks basic reading of files by printing frame0.txt and frame1.txt
  * Inputs: None
  * Outputs: PASS/FAIL
  * Side Effects: None
@@ -539,14 +555,13 @@ int filesys_file_driver_basic(){
 	byt = 1;
 	// printf("Opened file\n", byt);
 	while(byt){
-		// printf("Reading from file\n", byt);
+		//Reading from file\n
 		byt = read_file(0, (void *)buf, ARB_BYTE_NUM);
 		if(byt != -1){
-			// printf("Read success (%d bytes read)! Here is what was read:\n", byt);
+			// "Read success! Here is what was read
 			for(i = 0; i < byt; i++){
 				printf("%c", buf[i]);
 			}
-			// printf("%s\n", "<-----------------BYTES" );
 		}
 		else{
 			printf("%s\n", "Data read unsuccessful.");
@@ -555,7 +570,7 @@ int filesys_file_driver_basic(){
 		}
 	}
 	// read_file((void *)buf, 4);
-	// printf("Done reading, check screen to see what was read to verify correctness\n");
+	// Done reading, check screen to see what was read to verify correctness
 	close_file(0);
 
 
@@ -592,9 +607,9 @@ int filesys_file_driver_basic(){
 }
 
 
-/* ()
+/* filesys_file_driver_noclose()
  * 
- * Description: 
+ * Description: Checks that we don't have to close a file to open a new one
  * Inputs: None
  * Outputs: PASS/FAIL
  * Side Effects: None
@@ -621,7 +636,6 @@ int filesys_file_driver_noclose(){
 			for(i = 0; i < byt; i++){
 				printf("%c", buf[i]);
 			}
-			// printf("%s\n", "<-----------------BYTES" );
 		}
 		else{
 			printf("%s\n", "Data read unsuccessful.");
@@ -667,9 +681,9 @@ int filesys_file_driver_noclose(){
 
 }
 
-/* ()
+/* filesys_file_driver_exec()
  * 
- * Description: 
+ * Description: Prints the metadata of our only executable (fish)
  * Inputs: None
  * Outputs: PASS/FAIL
  * Side Effects: None
@@ -703,16 +717,15 @@ int filesys_file_driver_exec(){
 			return FAIL;
 		}
 	}
-	// read_file((void *)buf, 4);
 	printf("Done reading, check screen to see what was read to verify correctness\n");
 	close_file(0);
 
 	return PASS;
 }
 
-/* ()
+/* filesys_file_driver_raw()
  * 
- * Description: 
+ * Description: Prints 2 raw files as a check that we can read from them
  * Inputs: None
  * Outputs: PASS/FAIL
  * Side Effects: None
@@ -740,7 +753,6 @@ int filesys_file_driver_raw(){
 			for(i = 0; i < byt; i++){
 				printf("%c", buf[i]);
 			}
-			// printf("\n");
 		}
 		else{
 			printf("%s\n", "Data read unsuccessful.");
@@ -785,13 +797,13 @@ int filesys_file_driver_raw(){
 	printf("\nDone reading, check screen to see what was read to verify correctness\n");
 	close_file(0);
 
-
+	//Printed both successfully!
 	return PASS;
 }
 
-/* ()
+/* filesys_file_driver_long()
  * 
- * Description: 
+ * Description: Reads from verylargetextwithverylongname.tx to stress test
  * Inputs: None
  * Outputs: PASS/FAIL
  * Side Effects: None
@@ -831,9 +843,9 @@ int filesys_file_driver_long(){
 	return PASS;
 }
 
-/* ()
+/* filesys_file_list()
  * 
- * Description: 
+ * Description: Lists all files in our directory, file sizes, file type, using dir_read amd helpers
  * Inputs: None
  * Outputs: PASS/FAIL
  * Side Effects: None
@@ -854,9 +866,11 @@ int filesys_file_list(){
 	// uint8_t buf2print[80];
 
 	byt = 1;
+	//While we have files left to read
 	while(byt){
+		//Read it
 		byt = read_dir(0, (void *)buf, FILE_CHAR_PLUS_1);
-		if(!byt){break;}
+		if(!byt){break;} //If we didn't find anything break
 		if(byt != -1){
 			// printf("File Name%s\n", buf);
 			read_dentry_by_name(buf, &d);
@@ -922,7 +936,7 @@ void launch_tests(){
 	// TEST_OUTPUT("filesys_tests_dir_read_partial(6)", filesys_tests_dir_read_partial(6));
 	// filesys_tests_dir_read_partial(6);
 
-	TEST_OUTPUT("filesys_fail_cases",filesys_fail_cases());
+	// TEST_OUTPUT("filesys_fail_cases",filesys_fail_cases());
 
 	TEST_OUTPUT("filesys_file_list",filesys_file_list());
 

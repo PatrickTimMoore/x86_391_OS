@@ -298,6 +298,9 @@ int32_t close_file(int32_t fd){
 */
 int32_t read_dir(int32_t fd, void* buf, int32_t nbytes){
 	int i; //, ret;
+	//Treat printfs such as comments!
+
+	//if there's no bytes requested
 	if(nbytes == 0){
 		return 0;
 	}
@@ -316,12 +319,16 @@ int32_t read_dir(int32_t fd, void* buf, int32_t nbytes){
 
 	// printf("read_dir: we're valid\n");
 	dentry_t d;
+
+	//Copy into our local dentry
 	if(!read_dentry_by_index(currdir.curr_idx, &d)){ //assuming if this is unsuccessful we're out of files
 
 		// printf("read_dir: Got a dentry, copying file_name-------\n");
 		//accomodate for 32 big
 		uint8_t buf33[33];
 		// buf33[32] = '\n';
+
+		//Our own string copy
 		buf33[32] = '\0';
 		for(i = 0; i < 32; i++){
 			buf33[i] = d.file_name[i];
@@ -360,7 +367,7 @@ int32_t read_dir(int32_t fd, void* buf, int32_t nbytes){
 
 
 /* Function: int32_t write_dir
-*  Description: Nothing, you can't write to a directory (??)
+*  Description: Nothing, you can't write to a directory
 *  Inputs: Unused
 *  Outputs: -1 for failure
 *  Effects: Nothing
@@ -377,6 +384,9 @@ int32_t write_dir(int32_t fd, const void* buf, int32_t nbytes){
 *  Effects: Changes currdir
 */
 int32_t open_dir(const uint8_t* filename){
+	//Treat printf contents as comments as well
+
+	//Try to read
 	if(		!read_dentry_by_name(filename, &(currdir.dentry))	){
 		if(currdir.dentry.file_type != 1){
 			printf("open_dir ERROR: open_dir failed (Not a dir). Closing dir...\n" );
@@ -404,6 +414,7 @@ int32_t open_dir(const uint8_t* filename){
 *  Issues: Should check if the directory is actually open
 */
 int32_t close_dir(int32_t fd){
+	//Just close the file tracking; set everything afresh
 	currdir.open = 0;
 	currdir.bytes_read = 0;
 	currdir.curr_idx = 0;
