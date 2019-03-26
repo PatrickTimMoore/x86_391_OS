@@ -16,13 +16,13 @@
 
 #define INTERRUPT_HANDLER(func_name, interrupt_handler)        \
 .GLOBAL  func_name                                            ;\
-func_name:										              ;\
-	pushal  									              ;\
-	pushfl									                  ;\
-	call interrupt_handler							          ;\
-	popfl									                  ;\
-	popal									                  ;\
-	iret									                  ;\
+func_name:                                  ;\
+  pushal                                  ;\
+  pushfl                                    ;\
+  call interrupt_handler                        ;\
+  popfl                                   ;\
+  popal                                   ;\
+  iret                                    ;\
 
  /*the interface for keyboard handler*/
  INTERRUPT_HANDLER(keyboard_interrupt, keyboard_handler);
@@ -40,4 +40,36 @@ func_name:										              ;\
 */
 .global system_call_handler
 system_call_handler:
+  //push EBX, then ECX, then EDX
+  pushl %edi
+  pushl %esi
+  pushl %edx
+  pushl %ecx
+  pushl %ebx
 
+  //<insert jumptable from 1-10 using EAX>
+  cmpl  $10, %eax
+  jg    FAILURE
+  cmpl  $1, %eax
+  jl    FAILURE
+  addl  $-1, %eax
+  //    basically a switch function
+  //    EAX holds -1 on failure or 0 on success unless specified otherwise
+  call  *jump_table_system_call(, %eax, 4)
+  jmp   FINISH
+  FAILURE:
+  xorl  %eax, %eax
+  addl  $-1, %eax
+  FINISH:
+  //pop EDX, then ECX, then EBX, leaves EAX as return value
+  popl  %ebx
+  popl  %ecx
+  popl  %edx
+  popl  %esi
+  popl  %edi
+  iret
+
+/* jump_table_system_call */
+/* jump table used for the system calls */
+jump_table_system_call:
+  .long halt, execute, read, write, open, close, getargs, vidmap, set_handler, sigreturn
