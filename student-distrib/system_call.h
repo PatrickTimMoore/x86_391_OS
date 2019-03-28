@@ -3,26 +3,36 @@
 
 #include "types.h"
 
-#define FILES_NUM	8
+#define FILES_NUM		8
+#define FUN_PTR_NUM		3
 
-// typedef struct file_desc{
-// 	uint32_t* file_ops_ptr;
-// 	uint32_t inode_num;
-// 	uint32_t file_pos;
-// 	int32_t flags;
-// } file_desc_t;
+//yeezy just jumped over this
+typedef struct jump_man{
+	int32_t (*open)(const uint8_t);
+	int32_t (*read)(int32_t, void*, int32_t);
+	int32_t (*write)(int32_t, const void*, int32_t);
+	int32_t (*close)(int32_t fd);
+}jump_table_t;
 
-// typedef struct proc_ctrl_b{
-// 	uint32_t pid;
-// 	uint32_t esp0;
-// 	uint32_t ss0;
-// 	uint32_t esp;
-// 	uint32_t ss;
-// 	file_desc_t file_arr[FILES_NUM];
-// 	uint32_t next_idx;
-// }proc_ctrl_b_t;
+typedef struct file_desc{
+	jump_table_t file_ops_ptr;
+	uint32_t inode_num;
+	uint32_t file_pos;
+	int32_t flags;
+} file_desc_t;
 
-// proc_ctrl_b_t pcb;
+typedef struct proc_ctrl_b{
+	uint32_t pid0;
+	uint32_t pid;
+	uint32_t ebp0;
+	uint32_t esp0;
+	uint32_t ebp;
+	uint32_t esp;
+	file_desc_t file_arr[FILES_NUM];
+	uint32_t next_idx;
+}pcb_t;
+
+
 
 
 //yeet
