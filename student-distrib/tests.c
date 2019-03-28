@@ -991,6 +991,17 @@ int filesys_file_list(){
 
 
 /* Checkpoint 3 tests */
+void fun(int a) 
+{ 
+    printf("fun: Value of a is %d\n", a); 
+} 
+
+
+int fun2(int a) 
+{ 
+    return a+1; 
+} 
+
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
 
@@ -1008,7 +1019,7 @@ void launch_tests(){
 
 	//checkpoint2 test
 	//test the rtc open, read and write in one function
-	rtc_driver_test();
+	// rtc_driver_test();
 	//clear the screen and curosor for later test
 	clear();
 	//put the cursor at the upper left corner
@@ -1029,7 +1040,7 @@ void launch_tests(){
 	// TEST_OUTPUT("filesys_file_driver_long",filesys_file_driver_long());
 	// filesys_file_driver_long();
 
-	TEST_OUTPUT("filesys_file_driver_raw_partial", filesys_file_driver_raw_partial(PARTIAL_READS));
+	// TEST_OUTPUT("filesys_file_driver_raw_partial", filesys_file_driver_raw_partial(PARTIAL_READS));
 
 	// TEST_OUTPUT("filesys_tests_dir_read",filesys_tests_dir_read());
 	// filesys_tests_dir_read();
@@ -1041,8 +1052,19 @@ void launch_tests(){
 
 	// TEST_OUTPUT("filesys_file_list",filesys_file_list());
 	//test the terminal driver
-	terminal_driver_test();
+	// terminal_driver_test();
+	printf("Making func pointer\n");
+    void (*fun_ptr)(int) = fun;  // & removed 
+  
+	printf("Calling it...\n");
+    fun_ptr(10);  // * removed 
+    printf("Called.\n");
 
+    int (*fun_ptr2)(int) = fun2;  // & removed 
+    printf("Calling second fun\n");
+    printf("Got %d from fun2\n", fun_ptr2(11));
+    printf("Called.\n");
 
+    
 
 }
