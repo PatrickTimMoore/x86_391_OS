@@ -862,15 +862,15 @@ int filesys_file_driver_raw_partial(int sets){
 	close_file(0);
 
 	// printf("filesys_file_driver_raw\n");
-	char file_str[] = "ls";
+	char file_str[] = "shell";
 	// uint8_t buf[TEST_BUF_SIZE];
-	printf("Reading from ls...\n");
+	printf("Reading from shell...\n");
 	if(open_file((uint8_t*)file_str) == -1){
 		printf("Failed to open\n");
 		return FAIL;
 	}
 
-
+	int count = 0;
 	set_count = 0;
 	byt = 1;
 	// printf("Opened file\n", byt);
@@ -881,7 +881,8 @@ int filesys_file_driver_raw_partial(int sets){
 		if(byt != -1){
 			// printf("Read success (%d bytes read)! Here is what was read:\n", byt);
 			for(i = 0; i < byt; i++){
-				printf("%c", buf[i]);
+				printf("%d:%x ", count,  buf[i]);
+				count++;
 			}
 			// printf("\n");
 		}
@@ -1041,7 +1042,7 @@ void launch_tests(){
 	// TEST_OUTPUT("filesys_file_driver_long",filesys_file_driver_long());
 	// filesys_file_driver_long();
 
-	// TEST_OUTPUT("filesys_file_driver_raw_partial", filesys_file_driver_raw_partial(PARTIAL_READS));
+	TEST_OUTPUT("filesys_file_driver_raw_partial", filesys_file_driver_raw_partial(PARTIAL_READS));
 
 	// TEST_OUTPUT("filesys_tests_dir_read",filesys_tests_dir_read());
 	// filesys_tests_dir_read();
@@ -1055,8 +1056,8 @@ void launch_tests(){
 	//test the terminal driver
 	// terminal_driver_test();
 
-	unsigned char str[] = "    ls     ";
-	execute(str);
+    unsigned char str[] = "testprint";
+    execute(str);
 
     
 

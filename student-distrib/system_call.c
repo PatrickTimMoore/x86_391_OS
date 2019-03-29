@@ -19,7 +19,7 @@
 #define EIGHT_MB        0x800000
 #define FOUR_MB         0x400000
 #define ADDR_BLACKOUT	  0xFFFFF000
-#define PROC_ATT		    0x183
+#define PROC_ATT		    0x187
 #define EXEC_CPY_ADDR	  0x8048000
 #define EIGHT_KB		    0x2000
 #define USER_SP         0x8000000 + FOUR_MB - FOUR
@@ -37,7 +37,16 @@ static jump_table_t file_jt = {open_file, read_file, write_file, close_file};
 
 
 int32_t halt (uint8_t status){
-	return -1;
+   // pcb_t* pcb_ptr = (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
+   // int32_t par_pid = pcb_ptr->pid0;
+
+
+   // //Set up the 4MB page for our process
+   // page_dir[PROC_PD_IDX] = ((EIGHT_MB + (par_pid * FOUR_MB)) & ADDR_BLACKOUT) + PROC_ATT;
+   // flush_tlb();
+
+
+	return 0;
 }
 
 int32_t execute (const uint8_t* command){
@@ -45,7 +54,7 @@ int32_t execute (const uint8_t* command){
    uint8_t cmd_buf[MAX_BUF_SIZE];
    uint8_t buf[MAX_BUF_SIZE];
    uint32_t entry_p;
-   uint32_t* proc_load;
+   uint8_t* proc_load;
    pcb_t* pcb_ptr;
 
 
@@ -85,10 +94,11 @@ int32_t execute (const uint8_t* command){
    	return -1;
    }
 
-   read_file(0, buf, TWENNY+3);
+   read_file(0, buf, TWENNY);
    read_file(0, buf, FOUR);
 
-   entry_p = (buf[0] << 8*3) + (buf[1] << 8*2) + (buf[2] << 8*1) + buf[3];
+   entry_p = (buf[3] << 8*3) + (buf[2] << 8*2) + (buf[1] << 8*1) + buf[0];
+   printf("%x\n", entry_p);
 
    int32_t process_num = -1;
    //create a new process
@@ -112,8 +122,10 @@ int32_t execute (const uint8_t* command){
    // printf("EIGHT_MB: %x, process_num: %d, FOUR_MB: %x, ADDR_BLACKOUT: %x\n", EIGHT_MB, process_num, FOUR_MB, ADDR_BLACKOUT);
    // printf("Paged to %x with %x as index\n", PROC_PD_IDX << 22, ((EIGHT_MB + (process_num * FOUR_MB)) & ADDR_BLACKOUT) + PROC_ATT);
 
-   	/*PROCESS LOADER*/
-   	proc_load = (uint32_t *)EXEC_CPY_ADDR;
+  /*PROCESS LOADER*/
+  proc_load = (uint8_t *)EXEC_CPY_ADDR;
+  close_file(0);
+  open_file(cmd_buf);
 	byt = 1;
 	// printf("Opened file\n", byt);
 	while(byt){
@@ -124,6 +136,7 @@ int32_t execute (const uint8_t* command){
 			close_file(0);
 			return -1;
 		}
+    proc_load++;
 	}
 	close_file(0);
 
@@ -185,24 +198,28 @@ int32_t execute (const uint8_t* command){
     );
 
 
+
+
    	return 0;
 }
 
 int32_t read (int32_t fd, void* buf, int32_t nbytes){
+  printf("Syscall: read\n");
   pcb_t* pcb_ptr;
 
   if(fd < 0 || fd >= FILES_NUM){
     printf("read: Go fix your index you dumb fuck\n");
     return -1;
   }
-
+ 
+  pcb_ptr = (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
+ 
   if((((pcb_ptr->file_arr)[fd].flags & USED_MASK) == 0) ||
    (((pcb_ptr->file_arr)[fd].flags & READ_MASK) == 0)){
     printf("read: I can't read from this shit go away\n");
     return -1;
   }
   
-  pcb_ptr = (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
   (*(((pcb_ptr->file_arr)[fd].file_ops_ptr)->read))(fd, buf, nbytes);
 	return 0;
 }
@@ -210,19 +227,21 @@ int32_t read (int32_t fd, void* buf, int32_t nbytes){
 
 
 int32_t write (int32_t fd, const void* buf, int32_t nbytes){
+  // printf("Syscall: write\n");
   pcb_t* pcb_ptr;
   if(fd < 0 || fd >= FILES_NUM){
     printf("write: Go fix your index you dumb fuck\n");
     return -1;
   }
 
+  pcb_ptr = (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
+
   if((((pcb_ptr->file_arr)[fd].flags & USED_MASK) == 0) ||
    (((pcb_ptr->file_arr)[fd].flags & WRITE_MASK) == 0)){
-    printf("write: I can't read from this shit go away\n");
+    printf("write: I can't write to this shit go away\n");
     return -1;
   }
   
-  pcb_ptr = (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
   (*(((pcb_ptr->file_arr)[fd].file_ops_ptr)->write))(fd, buf, nbytes);
   return 0;
 }
@@ -231,6 +250,7 @@ int32_t write (int32_t fd, const void* buf, int32_t nbytes){
 
 
 int32_t open (const uint8_t* filename){
+  printf("Syscall: open\n");
   int i;
 	dentry_t d;
   pcb_t* pcb_ptr;

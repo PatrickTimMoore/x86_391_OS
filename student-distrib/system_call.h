@@ -16,7 +16,7 @@ typedef struct jump_man{
 
 typedef struct file_desc{
 	jump_table_t *file_ops_ptr;
-	uint32_t inode_num;
+	int32_t inode_num;
 	uint32_t file_pos;
 	int32_t flags;
 } file_desc_t;
