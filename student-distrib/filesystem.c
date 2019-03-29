@@ -75,7 +75,10 @@ int32_t init_filesys_addr(uint32_t b_addr){
 int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry_ret){
 	int i;          // tracks current dentry idx; for loop ctr
 	dentry_t d;     // holds current dentry
-
+	
+	// check for nullptr
+	if(fname == NULL)
+	    return -1;
 	// check for nullptr -LLY
 	if(dentry_ret == NULL)
 	    return -1;

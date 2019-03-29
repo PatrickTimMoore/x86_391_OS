@@ -15,15 +15,15 @@ typedef struct jump_man{
 }jump_table_t;
 
 typedef struct file_desc{
-	jump_table_t file_ops_ptr;
+	jump_table_t *file_ops_ptr;
 	uint32_t inode_num;
 	uint32_t file_pos;
 	int32_t flags;
 } file_desc_t;
 
 typedef struct proc_ctrl_b{
-	uint32_t pid0;
-	uint32_t pid;
+	int32_t pid0;
+	int32_t pid;
 	uint32_t ebp0;
 	uint32_t esp0;
 	uint32_t ebp;
@@ -32,6 +32,10 @@ typedef struct proc_ctrl_b{
 	uint32_t next_idx;
 }pcb_t;
 
+// FD flags
+// bit 0 = used
+// bit 1 = read
+// bit 2 = write
 
 
 

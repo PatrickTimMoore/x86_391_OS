@@ -1053,17 +1053,9 @@ void launch_tests(){
 	// TEST_OUTPUT("filesys_file_list",filesys_file_list());
 	//test the terminal driver
 	// terminal_driver_test();
-	printf("Making func pointer\n");
-    void (*fun_ptr)(int) = fun;  // & removed 
-  
-	printf("Calling it...\n");
-    fun_ptr(10);  // * removed 
-    printf("Called.\n");
 
-    int (*fun_ptr2)(int) = fun2;  // & removed 
-    printf("Calling second fun\n");
-    printf("Got %d from fun2\n", fun_ptr2(11));
-    printf("Called.\n");
+	char str[] = "    ls     ";
+	execute(str);
 
     
 
