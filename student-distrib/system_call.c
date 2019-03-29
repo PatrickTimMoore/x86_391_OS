@@ -4,6 +4,7 @@
 #include "lib.h"
 #include "paging.h"
 #include "keyboard_handler.h"
+#include "rtc_handler.h"
 #include "x86_desc.h"
 
 #define	MAX_BUF_SIZE 200
@@ -30,7 +31,9 @@
 static int32_t process_bit_map[]={0, 0, 0, 0, 0, 0};
 static int curr_pid = -1;
 static jump_table_t terminal_jt = {terminal_open, terminal_read, terminal_write, terminal_close };
-
+static jump_table_t rtc_jt = {rtc_open, rtc_read, rtc_write, rtc_close};
+static jump_table_t dir_jt = {open_dir, read_dir, write_dir, close_dir};
+static jump_table_t file_jt = {open_file, read_file, write_file, close_file};
 
 
 int32_t halt (uint8_t status){
@@ -141,7 +144,7 @@ int32_t execute (const uint8_t* command){
     );
 
     //SET PAGING
-    pcb_ptr->next_idx = 0;
+    // pcb_ptr->next_idx = 0;
     pcb_ptr->pid0 = curr_pid;
     curr_pid = process_num;
     pcb_ptr->pid = process_num;
@@ -186,29 +189,142 @@ int32_t execute (const uint8_t* command){
 }
 
 int32_t read (int32_t fd, void* buf, int32_t nbytes){
-	return -1;
+  pcb_t* pcb_ptr;
+
+  if(fd < 0 || fd >= FILES_NUM){
+    printf("read: Go fix your index you dumb fuck\n");
+    return -1;
+  }
+
+  if((((pcb_ptr->file_arr)[fd].flags & USED_MASK) == 0) ||
+   (((pcb_ptr->file_arr)[fd].flags & READ_MASK) == 0)){
+    printf("read: I can't read from this shit go away\n");
+    return -1;
+  }
+  
+  pcb_ptr = (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
+  (*(((pcb_ptr->file_arr)[fd].file_ops_ptr)->read))(fd, buf, nbytes);
+	return 0;
 }
+
+
 
 int32_t write (int32_t fd, const void* buf, int32_t nbytes){
-	return -1;
+  pcb_t* pcb_ptr;
+  if(fd < 0 || fd >= FILES_NUM){
+    printf("write: Go fix your index you dumb fuck\n");
+    return -1;
+  }
+
+  if((((pcb_ptr->file_arr)[fd].flags & USED_MASK) == 0) ||
+   (((pcb_ptr->file_arr)[fd].flags & WRITE_MASK) == 0)){
+    printf("write: I can't read from this shit go away\n");
+    return -1;
+  }
+  
+  pcb_ptr = (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
+  (*(((pcb_ptr->file_arr)[fd].file_ops_ptr)->write))(fd, buf, nbytes);
+  return 0;
 }
 
+
+
+
 int32_t open (const uint8_t* filename){
+  int i;
 	dentry_t d;
-	if(read_dentry_by_name(filename, &d) == -1){
-		printf("Read dentry failed!\n");
+  pcb_t* pcb_ptr;
+	
+  if(read_dentry_by_name(filename, &d) == -1){
+		printf("open: Read dentry failed!\n");
 		return -1;
 	}
-	return -1;
+
+  if(curr_pid == -1){
+    printf("open: No process running!\n");
+    return -1;
+  }
+
+  pcb_ptr = (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
+
+  for (i = 2; i < FILES_NUM; ++i){
+      if(((pcb_ptr->file_arr)[i].flags && USED_MASK) == 0){
+        break;
+      }
+  }
+
+  if(i == FILES_NUM){
+    printf("open: File array is full!\n");
+    return -1;
+  }
+
+  switch(d.file_type){
+    case 0:
+      (pcb_ptr->file_arr)[i].file_ops_ptr = &rtc_jt;
+      (pcb_ptr->file_arr)[i].inode_num = -1;
+      (pcb_ptr->file_arr)[i].file_pos = 0;
+      (pcb_ptr->file_arr)[i].flags = 0;
+      (pcb_ptr->file_arr)[i].flags |= USED_MASK;
+      (pcb_ptr->file_arr)[i].flags |= READ_MASK;
+      (pcb_ptr->file_arr)[i].flags |= WRITE_MASK;
+
+      break;
+    case 1:
+      (pcb_ptr->file_arr)[i].file_ops_ptr = &dir_jt;
+      (pcb_ptr->file_arr)[i].inode_num = -1;
+      (pcb_ptr->file_arr)[i].file_pos = 0;
+      (pcb_ptr->file_arr)[i].flags = 0;
+      (pcb_ptr->file_arr)[i].flags |= USED_MASK;
+      (pcb_ptr->file_arr)[i].flags |= READ_MASK;
+
+      break;
+    case 2:
+      (pcb_ptr->file_arr)[i].file_ops_ptr = &file_jt;
+      (pcb_ptr->file_arr)[i].inode_num = d.inode_num;
+      (pcb_ptr->file_arr)[i].file_pos = 0;
+      (pcb_ptr->file_arr)[i].flags = 0;
+      (pcb_ptr->file_arr)[i].flags |= USED_MASK;
+      (pcb_ptr->file_arr)[i].flags |= READ_MASK;
+      // (pcb_ptr->file_arr)[i].flags | WRITE_MASK;
+    default:
+      printf("open: %d is not valid filetype, go fix this\n", d.file_type);
+      break;
+  }
+
+  (*(((pcb_ptr->file_arr)[i].file_ops_ptr)->open))(filename);
+
+	return 0;
 }
 
 int32_t close (int32_t fd){
-	return -1;
+  pcb_t* pcb_ptr;
+
+  if(fd < 0 || fd >= FILES_NUM){
+    printf("close: Go fix your index you dumb fuck\n");
+    return -1;
+  }
+  if(fd == 0 || fd == 1){
+    printf("close: How the fuck will you run shit if you close stdin or stdout!\n");
+  }
+
+  pcb_ptr = (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
+
+  if(!((pcb_ptr->file_arr)[fd].flags & USED_MASK)){
+    printf("close: How the fuck will I close something already fucking closed???\n");
+  }
+
+  (*(((pcb_ptr->file_arr)[fd].file_ops_ptr)->close))(fd);
+  (pcb_ptr->file_arr)[fd].file_ops_ptr = NULL;
+  (pcb_ptr->file_arr)[fd].inode_num = -1;
+  (pcb_ptr->file_arr)[fd].file_pos = 0;
+  (pcb_ptr->file_arr)[fd].flags &= 0;
+
+	return 0;
 }
 
-int32_t init_pcb(){
-	return -1;
-}
+// int32_t init_pcb(){
+// 	return -1;
+// }
 
 int32_t getargs (uint8_t* buf, int32_t nbytes){
 	return -1;

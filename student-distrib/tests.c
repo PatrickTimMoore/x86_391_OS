@@ -4,6 +4,7 @@
 #include "rtc_handler.h"
 #include "keyboard_handler.h"
 #include "filesystem.h"
+#include "system_call.h"
 
 
 #define PASS 1
@@ -1054,7 +1055,7 @@ void launch_tests(){
 	//test the terminal driver
 	// terminal_driver_test();
 
-	char str[] = "    ls     ";
+	unsigned char str[] = "    ls     ";
 	execute(str);
 
     
