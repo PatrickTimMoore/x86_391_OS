@@ -7,14 +7,14 @@
 #include "rtc_handler.h"
 #include "x86_desc.h"
 
-#define	MAX_BUF_SIZE 200
-#define	FOUR		 4		//Hi peter	
-#define	TWENNY		 20		//Hi peter	
-#define DEL 		 0x7F
-#define E   		 0x45
-#define L 			 0x4C
-#define F 			 0x46
-#define PROCESS_NUM  2
+#define	MAX_BUF_SIZE    200
+#define	FOUR		        4		//Hi peter	
+#define	TWENNY		      20		//Hi peter	
+#define DEL 		        0x7F
+#define E   		        0x45
+#define L 			        0x4C
+#define F 			        0x46
+#define PROCESS_NUM     2
 #define PROC_PD_IDX 	  0x20
 #define EIGHT_MB        0x800000
 #define FOUR_MB         0x400000
@@ -26,6 +26,7 @@
 #define USED_MASK       0x1
 #define READ_MASK       0x2
 #define WRITE_MASK      0x4
+#define EMPTY_PD_ENTRY  0x00000002
 
 
 static int32_t process_bit_map[]={0, 0, 0, 0, 0, 0};
@@ -37,13 +38,66 @@ static jump_table_t file_jt = {open_file, read_file, write_file, close_file};
 
 
 int32_t halt (uint8_t status){
-   // pcb_t* pcb_ptr = (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
-   // int32_t par_pid = pcb_ptr->pid0;
+  pcb_t* pcb_ptr = (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
+  int32_t par_pid = pcb_ptr->pid0;
+  int i;
 
+  for (i = 2; i < FILES_NUM; ++i)
+  {
+    close(i);
+  }
 
-   // //Set up the 4MB page for our process
-   // page_dir[PROC_PD_IDX] = ((EIGHT_MB + (par_pid * FOUR_MB)) & ADDR_BLACKOUT) + PROC_ATT;
-   // flush_tlb();
+  (*(((pcb_ptr->file_arr)[0].file_ops_ptr)->close))(0);
+  (pcb_ptr->file_arr)[0].file_ops_ptr = NULL;
+  (pcb_ptr->file_arr)[0].inode_num = -1;
+  (pcb_ptr->file_arr)[0].file_pos = 0;
+  (pcb_ptr->file_arr)[0].flags &= 0;
+
+  (*(((pcb_ptr->file_arr)[1].file_ops_ptr)->close))(1);
+  (pcb_ptr->file_arr)[1].file_ops_ptr = NULL;
+  (pcb_ptr->file_arr)[1].inode_num = -1;
+  (pcb_ptr->file_arr)[1].file_pos = 0;
+  (pcb_ptr->file_arr)[1].flags &= 0;
+
+ 
+ 
+
+  process_bit_map[curr_pid] = 0;
+  //Set up the 4MB page for our parent process (or depage)
+   if(par_pid < 0){
+    printf("Last process!\n");
+     page_dir[PROC_PD_IDX] = EMPTY_PD_ENTRY;
+   }
+   else{
+     page_dir[PROC_PD_IDX] = ((EIGHT_MB + (par_pid * FOUR_MB)) & ADDR_BLACKOUT) + PROC_ATT;
+   }
+   flush_tlb();
+
+   printf("Repaged!\n");
+ 
+  //Assembly to restore ebp0, esp0
+  asm volatile ("   \n\
+      movl %0, %%esp \n\
+      movl %1, %%ebp \n\
+      "
+      :
+      :"r"(pcb_ptr->esp0), "r"(pcb_ptr->ebp0)
+      :"cc"
+  );
+
+  tss.esp0 = EIGHT_MB - (EIGHT_KB*par_pid) - FOUR;
+  tss.ss0 = KERNEL_DS;
+
+  printf("Bookkeeping set\n");
+
+  asm volatile ("     \n\
+      movzbl %0, %%eax  \n\
+      jmp EXEC_RET      \n\
+      "
+      :
+      :"r"(status)
+      :"cc"
+  );
 
 
 	return 0;
@@ -191,6 +245,9 @@ int32_t execute (const uint8_t* command){
       pushl %2      \n\
       pushl %0      \n\
       iret          \n\
+      EXEC_RET:     \n\
+      leave         \n\
+      ret           \n\
       "
       :
       :"r"(entry_p), "r"(USER_DS), "r"(USER_CS), "r"(USER_SP)
@@ -325,12 +382,14 @@ int32_t close (int32_t fd){
   }
   if(fd == 0 || fd == 1){
     printf("close: How the fuck will you run shit if you close stdin or stdout!\n");
+    return -1;
   }
 
   pcb_ptr = (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
 
   if(!((pcb_ptr->file_arr)[fd].flags & USED_MASK)){
     printf("close: How the fuck will I close something already fucking closed???\n");
+    return -1;
   }
 
   (*(((pcb_ptr->file_arr)[fd].file_ops_ptr)->close))(fd);

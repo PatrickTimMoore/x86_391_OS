@@ -26,8 +26,6 @@ typedef struct proc_ctrl_b{
 	int32_t pid;
 	uint32_t ebp0;
 	uint32_t esp0;
-	uint32_t ebp;
-	uint32_t esp;
 	file_desc_t file_arr[FILES_NUM];
 	// uint32_t next_idx;
 }pcb_t;
