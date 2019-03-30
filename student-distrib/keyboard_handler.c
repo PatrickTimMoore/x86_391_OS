@@ -291,6 +291,8 @@ int32_t terminal_close(int32_t fd) {
  ** interrupt finishes brfore reading.
 */
 int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
+    //enable the interrupt
+    sti();
     //check if the terminal driver is open or not
     if(open_flag == 8){
     	return 0;

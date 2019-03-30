@@ -102,7 +102,7 @@ int32_t read_dentry_by_name(const uint8_t* fname, dentry_t* dentry_ret){
 			return 0;
         }
 	}
-	printf("read_dentry_by_name failed.\n");
+	// printf("read_dentry_by_name failed.\n");
 	return -1;
 }
 
@@ -320,7 +320,7 @@ int32_t close_file(int32_t fd){
 *           * Changes currdir
 */
 int32_t read_dir(int32_t fd, void* buf, int32_t nbytes){
-	printf("read_dir called!\n");
+	// printf("read_dir called!\n");
 	int i; //, ret;
 	//Treat printfs such as comments!
 
@@ -343,11 +343,11 @@ int32_t read_dir(int32_t fd, void* buf, int32_t nbytes){
 
 	// printf("read_dir: we're valid\n");
 	dentry_t d;
-	printf("About to read %d bytes from dir file %d\n", nbytes, currdir.curr_idx);
+	// printf("About to read %d bytes from dir file %d\n", nbytes, currdir.curr_idx);
 	//Copy into our local dentry
 	if(!read_dentry_by_index(currdir.curr_idx, &d)){ //assuming if this is unsuccessful we're out of files
 
-		printf("read_dir: Got a dentry, copying file_name....\n");
+		// printf("read_dir: Got a dentry, copying file_name....\n");
 		//accomodate for null character
 		uint8_t tmp_buf[MAX_FNAME_LEN + 1];
 		// tmp_buf[MAX_FNAME_LEN] = '\n';
@@ -378,11 +378,14 @@ int32_t read_dir(int32_t fd, void* buf, int32_t nbytes){
 		currdir.curr_idx++;
 		currdir.bytes_read = 0;
 
-		printf("Returning %d...\n", i);
-		return i;
+		// printf("\nReturning %d...\n", i);
+		if(i == MAX_FNAME_LEN){
+			return i;
+		}
+		return i-1; //Adjust for going over
 	}
 	else{
-		printf("read_dir: Either done, or error in reading by index\n");
+		// printf("read_dir: Either done, or error in reading by index\n");
 		//If we can't access anymore we assume we have no more files
 		return 0;
 	}
@@ -411,7 +414,7 @@ int32_t write_dir(int32_t fd, const void* buf, int32_t nbytes){
 */
 int32_t open_dir(const uint8_t* filename){
 	//Treat printf contents as comments as well
-	printf("open_dir called!\n");
+	// printf("open_dir called!\n");
 	//Try to read
 	if(		!read_dentry_by_name(filename, &(currdir.dentry))	){
 		if(currdir.dentry.file_type != 1){
@@ -424,7 +427,7 @@ int32_t open_dir(const uint8_t* filename){
 		currdir.open = 1;
 		currdir.bytes_read = 0;
 		currdir.curr_idx = 0;
-		printf("Successfully opened dir\n");
+		// printf("Successfully opened dir\n");
 		return 0;
 	}
 
@@ -442,7 +445,7 @@ int32_t open_dir(const uint8_t* filename){
 */
 int32_t close_dir(int32_t fd){
 	//Just close the file tracking; set everything afresh
-	printf("close_dir called!\n");
+	// printf("close_dir called!\n");
 	currdir.open = 0;
 	currdir.bytes_read = 0;
 	currdir.curr_idx = 0;

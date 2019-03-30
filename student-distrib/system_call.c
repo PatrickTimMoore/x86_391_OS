@@ -19,7 +19,7 @@
 #define EIGHT_MB        0x800000
 #define FOUR_MB         0x400000
 #define ADDR_BLACKOUT	  0xFFFFF000
-#define PROC_ATT		    0x187
+#define PROC_ATT		    0x087
 #define EXEC_CPY_ADDR	  0x8048000
 #define EIGHT_KB		    0x2000
 #define USER_SP         0x8000000 + FOUR_MB - FOUR
@@ -39,29 +39,38 @@ static jump_table_t file_jt = {open_file, read_file, write_file, close_file};
 
 
 int32_t halt (uint8_t status){
+  // printf("0\n");
   pcb_t* pcb_ptr = (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
   int32_t par_pid = pcb_ptr->pid0;
   int i;
 
+  // printf("1\n");
   for (i = 2; i < FILES_NUM; ++i)
   {
     close(i);
   }
 
-  (*(((pcb_ptr->file_arr)[0].file_ops_ptr)->close))(0);
+  // printf("2\n");
+
+  // printf("2.25\n");
+  // (*(((pcb_ptr->file_arr)[0].file_ops_ptr)->close))(0);
+
   (pcb_ptr->file_arr)[0].file_ops_ptr = NULL;
   (pcb_ptr->file_arr)[0].inode_num = -1;
   (pcb_ptr->file_arr)[0].file_pos = 0;
   (pcb_ptr->file_arr)[0].flags &= 0;
 
-  (*(((pcb_ptr->file_arr)[1].file_ops_ptr)->close))(1);
+  // printf("2.325\n");
+  // (*(((pcb_ptr->file_arr)[1].file_ops_ptr)->close))(1);
   (pcb_ptr->file_arr)[1].file_ops_ptr = NULL;
   (pcb_ptr->file_arr)[1].inode_num = -1;
   (pcb_ptr->file_arr)[1].file_pos = 0;
   (pcb_ptr->file_arr)[1].flags &= 0;
 
+  // printf("2.5\n");
+  // (*(((pcb_ptr->file_arr)[0].file_ops_ptr)->close))(0);
  
- 
+  // printf("3\n");
 
   process_bit_map[curr_pid] = 0;
   //Set up the 4MB page for our parent process (or depage)
@@ -69,11 +78,12 @@ int32_t halt (uint8_t status){
        execute((uint8_t*)"shell");
    }
    else{
-     page_dir[PROC_PD_IDX] = ((EIGHT_MB + (par_pid * FOUR_MB)) & ADDR_BLACKOUT) + PROC_ATT;
+      // printf("Halt: Paging to %x\n", (EIGHT_MB + (par_pid * FOUR_MB)));
+      page_dir[PROC_PD_IDX] = ((EIGHT_MB + (par_pid * FOUR_MB)) & ADDR_BLACKOUT) + PROC_ATT;
    }
    flush_tlb();
 
-   printf("Repaged!\n");
+   // printf("Repaged!\n");
    curr_pid = par_pid;
  
   //Assembly to restore ebp0, esp0
@@ -89,16 +99,19 @@ int32_t halt (uint8_t status){
   tss.esp0 = EIGHT_MB - (EIGHT_KB*par_pid) - FOUR;
   tss.ss0 = KERNEL_DS;
 
-  printf("Bookkeeping set\n");
+  // printf("Bookkeeping set\n");
 
+  sti();
   asm volatile ("     \n\
       movzbl %0, %%eax  \n\
-      jmp EXEC_RET      \n\
+      leave             \n\
+      ret               \n\
       "
       :
       :"r"(status)
       :"cc"
   );
+  // jmp EXEC_RET      \n\
 
 
 	return 0;
@@ -143,7 +156,7 @@ int32_t execute (const uint8_t* command){
    // read_file(0, buf, FOUR);
    // printf("Reading dentry by name\n");
    if(read_dentry_by_name(cmd_buf, &d) == -1){
-    printf("Executable not found.\n");
+    // printf("Executable not found.\n");
     return -1;
    }
    // printf("Reading first 4 bytes\n");
@@ -166,7 +179,7 @@ int32_t execute (const uint8_t* command){
    read_data(d.inode_num, ENTRY_PT_OFFSET, buf, FOUR);
 
    entry_p = (buf[3] << 8*3) + (buf[2] << 8*2) + (buf[1] << 8*1) + buf[0];
-   printf("%x\n", entry_p);
+   // printf("%x\n", entry_p);
 
    int32_t process_num = -1;
    //create a new process
@@ -184,6 +197,7 @@ int32_t execute (const uint8_t* command){
    }
    /*SET UP PAGING*/
    //Set up the 4MB page for our process
+   // printf("Paged to %x\n", (EIGHT_MB + (process_num * FOUR_MB)) );
    page_dir[PROC_PD_IDX] = ((EIGHT_MB + (process_num * FOUR_MB)) & ADDR_BLACKOUT) + PROC_ATT;
    flush_tlb();
 
@@ -245,7 +259,6 @@ int32_t execute (const uint8_t* command){
     (pcb_ptr->file_arr)[0].flags |= USED_MASK;
     (pcb_ptr->file_arr)[0].flags |= READ_MASK;
 
-
     (pcb_ptr->file_arr)[1].file_ops_ptr = &terminal_jt;
     (pcb_ptr->file_arr)[1].inode_num = -1;
     (pcb_ptr->file_arr)[1].file_pos = 0;
@@ -253,11 +266,15 @@ int32_t execute (const uint8_t* command){
     (pcb_ptr->file_arr)[1].flags |= USED_MASK;
     (pcb_ptr->file_arr)[1].flags |= WRITE_MASK;
 
+    (*(((pcb_ptr->file_arr)[0].file_ops_ptr)->open))(0);
+
     //Switch TSS constants
     tss.esp0 = EIGHT_MB - process_num*EIGHT_KB - FOUR;
     tss.ss0 = KERNEL_DS;
 
     printf("Got here. \n");
+    sti();
+
     asm volatile ("   \n\
       mov %1, %%ds  \n\
       pushl %1      \n\
@@ -298,8 +315,8 @@ int32_t read (int32_t fd, void* buf, int32_t nbytes){
     return -1;
   }
   
-  (*(((pcb_ptr->file_arr)[fd].file_ops_ptr)->read))(fd, buf, nbytes);
-	return 0;
+
+	return (*(((pcb_ptr->file_arr)[fd].file_ops_ptr)->read))(fd, buf, nbytes);
 }
 
 
@@ -319,9 +336,8 @@ int32_t write (int32_t fd, const void* buf, int32_t nbytes){
     printf("write: I can't write to this shit go away\n");
     return -1;
   }
-  
-  (*(((pcb_ptr->file_arr)[fd].file_ops_ptr)->write))(fd, buf, nbytes);
-  return 0;
+
+  return (*(((pcb_ptr->file_arr)[fd].file_ops_ptr)->write))(fd, buf, nbytes);
 }
 
 
@@ -368,7 +384,7 @@ int32_t open (const uint8_t* filename){
 
       break;
     case 1:
-      printf("Opening dir...\n");
+      // printf("Opening dir...\n");
       (pcb_ptr->file_arr)[i].file_ops_ptr = &dir_jt;
       (pcb_ptr->file_arr)[i].inode_num = -1;
       (pcb_ptr->file_arr)[i].file_pos = 0;

@@ -41,8 +41,11 @@ func_name:                                  ;\
 .global system_call_handler
 system_call_handler:
   //push EBX, then ECX, then EDX
+  # pushfl
+  pushl %fs
+  pushl %es
+  pushl %ds
   pushl %ebp
-  movl %esp, %ebp
   pushl %edi
   pushl %esi
   pushl %edx
@@ -58,6 +61,8 @@ system_call_handler:
   //    basically a switch function
   //    EAX holds -1 on failure or 0 on success unless specified otherwise
   call  *jump_table_system_call(, %eax, 4)
+  movw  $USER_DS, %dx
+  movw  %dx, %ds
   jmp   FINISH
   FAILURE:
   xorl  %eax, %eax
@@ -69,7 +74,11 @@ system_call_handler:
   popl  %edx
   popl  %esi
   popl  %edi
-  leave
+  popl  %ebp
+  popl  %ds
+  popl  %es
+  popl  %fs
+  # popfl
   iret
 
 /* jump_table_system_call */
