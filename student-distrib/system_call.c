@@ -30,6 +30,7 @@
 #define ENTRY_PT_OFFSET 24
 
 
+static int num_p=0;
 static int32_t process_bit_map[]={0, 0, 0, 0, 0, 0};
 static int curr_pid = -1;
 static jump_table_t terminal_jt = {terminal_open, terminal_read, terminal_write, terminal_close };
@@ -74,42 +75,41 @@ int32_t halt (uint8_t status){
 
   process_bit_map[curr_pid] = 0;
   //Set up the 4MB page for our parent process (or depage)
+  curr_pid = par_pid;
    if(par_pid < 0){
        execute((uint8_t*)"shell");
+
    }
    else{
+
       // printf("Halt: Paging to %x\n", (EIGHT_MB + (par_pid * FOUR_MB)));
       page_dir[PROC_PD_IDX] = ((EIGHT_MB + (par_pid * FOUR_MB)) & ADDR_BLACKOUT) + PROC_ATT;
+   
+      flush_tlb();
    }
-   flush_tlb();
-
    // printf("Repaged!\n");
-   curr_pid = par_pid;
- 
-  //Assembly to restore ebp0, esp0
-  asm volatile ("   \n\
-      movl %0, %%esp \n\
-      movl %1, %%ebp \n\
-      "
-      :
-      :"r"(pcb_ptr->esp0), "r"(pcb_ptr->ebp0)
-      :"cc"
-  );
+
+
 
   tss.esp0 = EIGHT_MB - (EIGHT_KB*par_pid) - FOUR;
   tss.ss0 = KERNEL_DS;
+ 
+
+
 
   // printf("Bookkeeping set\n");
 
   sti();
   asm volatile ("     \n\
-      movzbl %0, %%eax  \n\
+  	  movzbl %2, %%eax  \n\
+  	  movl %0, %%esp \n\
+      movl %1, %%ebp \n\
       leave             \n\
       ret               \n\
       "
       :
-      :"r"(status)
-      :"cc"
+      :"r"(pcb_ptr->esp0), "r"(pcb_ptr->ebp0),"r"(status)
+      :"%eax"
   );
   // jmp EXEC_RET      \n\
 
@@ -195,6 +195,7 @@ int32_t execute (const uint8_t* command){
        printf("All process are taken up");
        return -1;
    }
+   num_p++;
    /*SET UP PAGING*/
    //Set up the 4MB page for our process
    // printf("Paged to %x\n", (EIGHT_MB + (process_num * FOUR_MB)) );

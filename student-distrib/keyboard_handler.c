@@ -128,6 +128,7 @@ void keyboard_handler(){
     unsigned int scancodeVal;
     int isLetter = 0;
     send_eoi(IRQ1KEYBOARD);
+    sti();
     cli();
     scancodeVal = inb(KEYBOARDDATAPORT);
     if(((scancodeVal >= ALPHALINE1START) && (scancodeVal <= ALPHALINE1END)) ||
