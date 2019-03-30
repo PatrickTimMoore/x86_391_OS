@@ -41,6 +41,8 @@ func_name:                                  ;\
 .global system_call_handler
 system_call_handler:
   //push EBX, then ECX, then EDX
+  pushl %ebp
+  movl %esp, %ebp
   pushl %edi
   pushl %esi
   pushl %edx
@@ -67,6 +69,7 @@ system_call_handler:
   popl  %edx
   popl  %esi
   popl  %edi
+  leave
   iret
 
 /* jump_table_system_call */

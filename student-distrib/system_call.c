@@ -370,7 +370,7 @@ int32_t open (const uint8_t* filename){
 
   (*(((pcb_ptr->file_arr)[i].file_ops_ptr)->open))(filename);
 
-	return 0;
+	return i;
 }
 
 int32_t close (int32_t fd){
@@ -401,6 +401,7 @@ int32_t close (int32_t fd){
 	return 0;
 }
 
+
 // int32_t init_pcb(){
 // 	return -1;
 // }
@@ -419,4 +420,18 @@ int32_t set_handler (int32_t signum, void* handler_address){
 
 int32_t sigreturn (void){
 	return -1;
+}
+
+
+extern pcb_t* get_curr_pcb(){
+  return (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
+}
+
+extern int32_t get_curr_pid(){
+  return curr_pid;
+}
+
+extern pcb_t* get_pcb(int gpid){
+  return (pcb_t*)(EIGHT_MB - (gpid + 1)*EIGHT_KB);
+
 }

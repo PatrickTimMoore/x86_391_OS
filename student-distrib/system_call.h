@@ -48,7 +48,11 @@ extern int32_t getargs (uint8_t* buf, int32_t nbytes);
 extern int32_t vidmap (uint8_t** screen_start);
 extern int32_t set_handler (int32_t signum, void* handler_address);
 extern int32_t sigreturn (void);
-// extern int32_t init_pcb();
+
+
+extern pcb_t* get_curr_pcb();
+extern int32_t get_curr_pid();
+extern pcb_t* get_pcb(int gpid);
 
 
 #endif
