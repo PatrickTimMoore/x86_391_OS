@@ -1,6 +1,7 @@
 #include "filesystem.h"
 #include "types.h"
 #include "lib.h"
+#include "system_call.h"
 
 
 /*
@@ -52,8 +53,8 @@ int32_t init_filesys_addr(uint32_t b_addr){
 
     /* initialization of currfile and currdir, where no files
      * nor directories are initially open or read -LLY */
-	currfile.open = 0;
-	currfile.bytes_read = 0;
+	// currfile.open = 0;
+	// currfile.bytes_read = 0;
 
 	currdir.open = 0;
 	currdir.bytes_read = 0;
@@ -208,11 +209,12 @@ int32_t read_data(uint32_t inode_idx, uint32_t offset, uint8_t* buf, uint32_t le
 */
 int32_t read_file(int32_t fd, void* buf, int32_t nbytes){
 	int ret;
+	pcb_t* pcb_ptr;
 
-	if(!currfile.open){
-		printf("%s\n", "read_file ERROR: No file currently open!\n");
-		return -1;
-	}
+	// if(!currfile.open){
+		// printf("%s\n", "read_file ERROR: No file currently open!\n");
+		// return -1;
+	// }
 	if(buf == NULL){
 		printf("%s\n", "read_file ERROR: Buffer passed was NULL!\n");
 		return -1;
@@ -221,14 +223,25 @@ int32_t read_file(int32_t fd, void* buf, int32_t nbytes){
 		printf("%s\n", "read_file ERROR: Requested negative bytes\n");
 		return -1;
 	}
+	if(fd < 0 || fd >= FILES_NUM){
+		printf("%s\n", "read_file ERROR: File request out of bounds\n");
+		return -1;
+	}
 
-	ret = read_data(currfile.dentry.inode_num, currfile.bytes_read, (uint8_t*)buf, nbytes);
+	pcb_ptr = get_curr_pcb();
+	if( (((pcb_ptr->file_arr)[fd].flags & USED_MASK) == 0) ||
+   		(((pcb_ptr->file_arr)[fd].flags & READ_MASK) == 0)){
+		printf("%s\n", "read_file ERROR: File not in readable state\n");
+		return -1;
+	}
+
+	ret = read_data( (pcb_ptr->file_arr)[fd].inode_num, (pcb_ptr->file_arr)[fd].file_pos, (uint8_t*)buf, nbytes);
 	// printf("ret got %d\n", ret );
 	if(ret == -1){
 		printf("%s\n", "read_file ERROR: Read failed\n");
 	}
 	else
-	    currfile.bytes_read += ret;
+	    (pcb_ptr->file_arr)[fd].file_pos += ret;
 
 	return ret;
 }
@@ -253,20 +266,20 @@ int32_t write_file(int32_t fd, const void* buf, int32_t nbytes){
 *  Effects: Changes currfile struct
 */
 int32_t open_file(const uint8_t* filename){
-	if(		!read_dentry_by_name(filename, &(currfile.dentry))	){
-		if(currfile.dentry.file_type != 2){
-			printf("open_file ERROR: open_file failed (Not a file). Closing file...\n");
-			currfile.open = 0;
-			currfile.bytes_read = 0;
-			return -1;
-		}
-		currfile.open = 1;
-		currfile.bytes_read = 0;
-		return 0;
-	}
+	// if(		!read_dentry_by_name(filename, &(currfile.dentry))	){
+	// 	if(currfile.dentry.file_type != 2){
+	// 		printf("open_file ERROR: open_file failed (Not a file). Closing file...\n");
+	// 		currfile.open = 0;
+	// 		currfile.bytes_read = 0;
+	// 		return -1;
+	// 	}
+	// 	currfile.open = 1;
+	// 	currfile.bytes_read = 0;
+	// 	return 0;
+	// }
 		
-	printf("%s\n", "open_file ERROR: open_file failed (file not found)\n");
-	return -1;
+	// printf("%s\n", "open_file ERROR: open_file failed (file not found)\n");
+	return 0;
 	
 }
 
@@ -282,8 +295,15 @@ int32_t open_file(const uint8_t* filename){
 *           3. if the file is being read
 */
 int32_t close_file(int32_t fd){
-	currfile.open = 0;
-	currfile.bytes_read = 0;
+	// currfile.open = 0;
+	// currfile.bytes_read = 0;
+
+	//Taken care of by sys_close
+  	//(pcb_ptr->file_arr)[fd].file_ops_ptr = NULL;
+  	//(pcb_ptr->file_arr)[fd].inode_num = -1;
+  	//(pcb_ptr->file_arr)[fd].file_pos = 0;
+  	//(pcb_ptr->file_arr)[fd].flags &= 0;
+
 	return 0;
 }
 
@@ -300,6 +320,7 @@ int32_t close_file(int32_t fd){
 *           * Changes currdir
 */
 int32_t read_dir(int32_t fd, void* buf, int32_t nbytes){
+	printf("read_dir called!\n");
 	int i; //, ret;
 	//Treat printfs such as comments!
 
@@ -322,11 +343,11 @@ int32_t read_dir(int32_t fd, void* buf, int32_t nbytes){
 
 	// printf("read_dir: we're valid\n");
 	dentry_t d;
-
+	printf("About to read %d bytes from dir file %d\n", nbytes, currdir.curr_idx);
 	//Copy into our local dentry
 	if(!read_dentry_by_index(currdir.curr_idx, &d)){ //assuming if this is unsuccessful we're out of files
 
-		// printf("read_dir: Got a dentry, copying file_name-------\n");
+		printf("read_dir: Got a dentry, copying file_name....\n");
 		//accomodate for null character
 		uint8_t tmp_buf[MAX_FNAME_LEN + 1];
 		// tmp_buf[MAX_FNAME_LEN] = '\n';
@@ -356,10 +377,12 @@ int32_t read_dir(int32_t fd, void* buf, int32_t nbytes){
 		//No matter how much we copy, move on to next file for next read
 		currdir.curr_idx++;
 		currdir.bytes_read = 0;
+
+		printf("Returning %d...\n", i);
 		return i;
 	}
 	else{
-		// printf("read_dir: Either done, or error in reading by index\n");
+		printf("read_dir: Either done, or error in reading by index\n");
 		//If we can't access anymore we assume we have no more files
 		return 0;
 	}
@@ -388,7 +411,7 @@ int32_t write_dir(int32_t fd, const void* buf, int32_t nbytes){
 */
 int32_t open_dir(const uint8_t* filename){
 	//Treat printf contents as comments as well
-
+	printf("open_dir called!\n");
 	//Try to read
 	if(		!read_dentry_by_name(filename, &(currdir.dentry))	){
 		if(currdir.dentry.file_type != 1){
@@ -401,6 +424,7 @@ int32_t open_dir(const uint8_t* filename){
 		currdir.open = 1;
 		currdir.bytes_read = 0;
 		currdir.curr_idx = 0;
+		printf("Successfully opened dir\n");
 		return 0;
 	}
 
@@ -418,6 +442,7 @@ int32_t open_dir(const uint8_t* filename){
 */
 int32_t close_dir(int32_t fd){
 	//Just close the file tracking; set everything afresh
+	printf("close_dir called!\n");
 	currdir.open = 0;
 	currdir.bytes_read = 0;
 	currdir.curr_idx = 0;

@@ -412,6 +412,8 @@ int filesys_tests_dir_read(){
 	return PASS;
 }
 
+//NO FILE READ TESTS VALID FROM CP3
+
 /* filesys_fail_cases()
  * 
  * Description: Tests that our filesystem driver fails when it must
@@ -1027,6 +1029,8 @@ void launch_tests(){
 	//put the cursor at the upper left corner
 	set_cursor_pos(0,0);
 
+	// NONE OF FOLLOWING TESTS VALID FROM CP3 FORWARD
+
 	// TEST_OUTPUT("filesys_file_driver_basic", filesys_file_driver_basic());
 	// filesys_file_driver_basic();
 
@@ -1042,7 +1046,7 @@ void launch_tests(){
 	// TEST_OUTPUT("filesys_file_driver_long",filesys_file_driver_long());
 	// filesys_file_driver_long();
 
-	TEST_OUTPUT("filesys_file_driver_raw_partial", filesys_file_driver_raw_partial(PARTIAL_READS));
+	// TEST_OUTPUT("filesys_file_driver_raw_partial", filesys_file_driver_raw_partial(PARTIAL_READS));
 
 	// TEST_OUTPUT("filesys_tests_dir_read",filesys_tests_dir_read());
 	// filesys_tests_dir_read();
@@ -1056,7 +1060,7 @@ void launch_tests(){
 	//test the terminal driver
 	// terminal_driver_test();
 
-    unsigned char str[] = "testprint";
+    unsigned char str[] = "   shell  ";
     execute(str);
 
     

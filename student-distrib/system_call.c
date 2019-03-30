@@ -27,6 +27,7 @@
 #define READ_MASK       0x2
 #define WRITE_MASK      0x4
 #define EMPTY_PD_ENTRY  0x00000002
+#define ENTRY_PT_OFFSET 24
 
 
 static int32_t process_bit_map[]={0, 0, 0, 0, 0, 0};
@@ -65,8 +66,7 @@ int32_t halt (uint8_t status){
   process_bit_map[curr_pid] = 0;
   //Set up the 4MB page for our parent process (or depage)
    if(par_pid < 0){
-    printf("Last process!\n");
-     page_dir[PROC_PD_IDX] = EMPTY_PD_ENTRY;
+       execute((uint8_t*)"shell");
    }
    else{
      page_dir[PROC_PD_IDX] = ((EIGHT_MB + (par_pid * FOUR_MB)) & ADDR_BLACKOUT) + PROC_ATT;
@@ -74,6 +74,7 @@ int32_t halt (uint8_t status){
    flush_tlb();
 
    printf("Repaged!\n");
+   curr_pid = par_pid;
  
   //Assembly to restore ebp0, esp0
   asm volatile ("   \n\
@@ -104,14 +105,15 @@ int32_t halt (uint8_t status){
 }
 
 int32_t execute (const uint8_t* command){
-   int i, cmdstart, cmdend, cmdlen, byt;
+   int i, cmdstart, cmdend, cmdlen, byt, offset;
+   dentry_t d;
    uint8_t cmd_buf[MAX_BUF_SIZE];
    uint8_t buf[MAX_BUF_SIZE];
    uint32_t entry_p;
    uint8_t* proc_load;
    pcb_t* pcb_ptr;
 
-
+   // printf("Execute!\n");
    /*PARSE THE ARGUMENT*/
    cmdlen = strlen((int8_t*)command);
   
@@ -133,12 +135,22 @@ int32_t execute (const uint8_t* command){
    //Manually null terminate
    cmd_buf[i - cmdstart] = '\0';
 
+   offset = 0;
    // printf("Executing %s...\n", cmd_buf);
 
    /*IS EXECUTABLE?*/
-   open_file(cmd_buf);
-   read_file(0, buf, FOUR);
+   // open_file(cmd_buf);
+   // read_file(0, buf, FOUR);
+   // printf("Reading dentry by name\n");
+   if(read_dentry_by_name(cmd_buf, &d) == -1){
+    printf("Executable not found.\n");
+    return -1;
+   }
+   // printf("Reading first 4 bytes\n");
+   read_data(d.inode_num, 0, buf, FOUR);
 
+
+   // printf("Check _ELF\n");
    //check for (weird shit)ELF
    if(buf[0] != DEL &&
    	  buf[1] != E   &&
@@ -148,8 +160,10 @@ int32_t execute (const uint8_t* command){
    	return -1;
    }
 
-   read_file(0, buf, TWENNY);
-   read_file(0, buf, FOUR);
+   // read_file(0, buf, TWENNY);
+   // read_file(0, buf, FOUR);
+
+   read_data(d.inode_num, ENTRY_PT_OFFSET, buf, FOUR);
 
    entry_p = (buf[3] << 8*3) + (buf[2] << 8*2) + (buf[1] << 8*1) + buf[0];
    printf("%x\n", entry_p);
@@ -178,22 +192,29 @@ int32_t execute (const uint8_t* command){
 
   /*PROCESS LOADER*/
   proc_load = (uint8_t *)EXEC_CPY_ADDR;
-  close_file(0);
-  open_file(cmd_buf);
-	byt = 1;
+
+  // close_file(0);
+  // open_file(cmd_buf);
+
+  // printf("Got here 0\n");
+	
+  byt = 1;
 	// printf("Opened file\n", byt);
 	while(byt){
 		// printf("Reading from file\n", byt);
-		byt = read_file(0, (void *)proc_load, 1);
+		// byt = read_file(0, (void *)proc_load, 1);
+    byt = read_data(d.inode_num, offset, (void *)proc_load, 1);
 		if(byt == -1){
 			printf("%s\n", "Data read unsuccessful.");
-			close_file(0);
+			// close_file(0);
 			return -1;
 		}
+    offset += byt;
     proc_load++;
 	}
-	close_file(0);
+	// close_file(0);
 
+  // printf("Got here 1\n");
 
 	/*PROCESS CONTROL BLOCK*/
 
@@ -261,7 +282,7 @@ int32_t execute (const uint8_t* command){
 }
 
 int32_t read (int32_t fd, void* buf, int32_t nbytes){
-  printf("Syscall: read\n");
+  // printf("Syscall: read\n");
   pcb_t* pcb_ptr;
 
   if(fd < 0 || fd >= FILES_NUM){
@@ -284,7 +305,7 @@ int32_t read (int32_t fd, void* buf, int32_t nbytes){
 
 
 int32_t write (int32_t fd, const void* buf, int32_t nbytes){
-  // printf("Syscall: write\n");
+  // printf("Syscall: write (%d)\n", fd);
   pcb_t* pcb_ptr;
   if(fd < 0 || fd >= FILES_NUM){
     printf("write: Go fix your index you dumb fuck\n");
@@ -347,6 +368,7 @@ int32_t open (const uint8_t* filename){
 
       break;
     case 1:
+      printf("Opening dir...\n");
       (pcb_ptr->file_arr)[i].file_ops_ptr = &dir_jt;
       (pcb_ptr->file_arr)[i].inode_num = -1;
       (pcb_ptr->file_arr)[i].file_pos = 0;
@@ -388,7 +410,7 @@ int32_t close (int32_t fd){
   pcb_ptr = (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
 
   if(!((pcb_ptr->file_arr)[fd].flags & USED_MASK)){
-    printf("close: How the fuck will I close something already fucking closed???\n");
+    // printf("close: How the fuck will I close something already fucking closed???\n");
     return -1;
   }
 

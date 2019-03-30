@@ -18,6 +18,10 @@
 #define BLOCK_SIZE      4096
 #define NULL            0
 
+#define USED_MASK       0x1
+#define READ_MASK       0x2
+#define WRITE_MASK      0x4
+
 /* The struct for a dentry (file metadata);
 must be exactly 64B; holds the name of the file,
 the type, the index to its corresponding inode,
@@ -55,11 +59,11 @@ typedef struct data_block{
 } data_block_t;
 
 /*A data structure to hold info on status of our current file*/
-typedef struct curr_file{
-	uint8_t open;
-	uint32_t bytes_read;
-	dentry_t dentry;
-}curr_file_t;
+// typedef struct curr_file{
+// 	uint8_t open;
+// 	uint32_t bytes_read;
+// 	dentry_t dentry;
+// }curr_file_t;
 
 
 /*A data structure to hold info on status of our current directory*/
@@ -77,7 +81,7 @@ inode_t* inodes;
 data_block_t* datas;
 
 //Our bookkeeping data structures
-curr_file_t currfile;
+// curr_file_t currfile;
 curr_dir_t currdir;
 
 
