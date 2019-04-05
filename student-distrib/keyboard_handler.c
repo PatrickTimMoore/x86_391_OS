@@ -129,7 +129,7 @@ void keyboard_handler(){
     int isLetter = 0;
     send_eoi(IRQ1KEYBOARD);
     sti();
-    cli();
+    //cli();
     scancodeVal = inb(KEYBOARDDATAPORT);
     if(((scancodeVal >= ALPHALINE1START) && (scancodeVal <= ALPHALINE1END)) ||
        ((scancodeVal >= ALPHALINE2START) && (scancodeVal <= ALPHALINE2END)) ||
@@ -295,7 +295,7 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
     //enable the interrupt
     sti();
     //check if the terminal driver is open or not
-    if(open_flag == 8){
+    if(open_flag >= 8){
     	return 0;
     }
 	//check if the parameters are valid
@@ -347,7 +347,7 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
          }
       }
       buffer_length=overflowedChar;
-
+     
       //return the number of bytes read correctly
       return bytes_read;
 }
@@ -363,7 +363,7 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
 */
 int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
      //check if the terminal driver is open or not
-    if(open_flag == 0){
+    if(open_flag >= 8){
     	return 0;
     }
 	//check if the parameters are valid

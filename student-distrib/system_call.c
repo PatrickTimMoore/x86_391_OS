@@ -14,7 +14,7 @@
 #define E   		        0x45
 #define L 			        0x4C
 #define F 			        0x46
-#define PROCESS_NUM     2
+#define PROCESS_NUM     6
 #define PROC_PD_IDX 	  0x20
 #define EIGHT_MB        0x800000
 #define FOUR_MB         0x400000
@@ -40,7 +40,7 @@ static jump_table_t file_jt = {open_file, read_file, write_file, close_file};
 
 
 int32_t halt (uint8_t status){
-  // printf("0\n");
+
   pcb_t* pcb_ptr = (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
   int32_t par_pid = pcb_ptr->pid0;
   int i;
@@ -54,7 +54,7 @@ int32_t halt (uint8_t status){
   // printf("2\n");
 
   // printf("2.25\n");
-  // (*(((pcb_ptr->file_arr)[0].file_ops_ptr)->close))(0);
+  (*(((pcb_ptr->file_arr)[0].file_ops_ptr)->close))(0);
 
   (pcb_ptr->file_arr)[0].file_ops_ptr = NULL;
   (pcb_ptr->file_arr)[0].inode_num = -1;
@@ -104,14 +104,13 @@ int32_t halt (uint8_t status){
   	  movzbl %2, %%eax  \n\
   	  movl %0, %%esp \n\
       movl %1, %%ebp \n\
-      leave             \n\
-      ret               \n\
+      jmp EXEC_RET      \n\
       "
       :
       :"r"(pcb_ptr->esp0), "r"(pcb_ptr->ebp0),"r"(status)
       :"%eax"
   );
-  // jmp EXEC_RET      \n\
+
 
 
 	return 0;
@@ -190,6 +189,7 @@ int32_t execute (const uint8_t* command){
        	    break;
        }
    }
+
    //all the process are used
    if(process_num == -1){
        printf("All process are taken up");
@@ -212,6 +212,7 @@ int32_t execute (const uint8_t* command){
   // open_file(cmd_buf);
 
   // printf("Got here 0\n");
+
 	
   byt = 1;
 	// printf("Opened file\n", byt);

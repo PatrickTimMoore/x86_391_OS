@@ -93,6 +93,7 @@ int32_t rtc_open(const uint8_t * filename){
  ** This function will block until the next interrupt of RTC happens.
  */
 int32_t rtc_read (int32_t fd, void* buf, int32_t nbytes){
+    sti();
     //check if the RTC is open or not
     if( rtc_open_flag == 0){
         return -1;
@@ -114,6 +115,7 @@ int32_t rtc_read (int32_t fd, void* buf, int32_t nbytes){
  ** This function tries to set the RTC to desired frequency
  */
 int32_t  rtc_write(int32_t fd, const void* buf, int32_t nbytes){
+    sti();
     //check if the RTC is open or not
     if( rtc_open_flag == 0){
         return -1;
