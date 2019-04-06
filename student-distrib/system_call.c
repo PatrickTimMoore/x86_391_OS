@@ -28,9 +28,14 @@
 #define WRITE_MASK      0x4
 #define EMPTY_PD_ENTRY  0x00000002
 #define ENTRY_PT_OFFSET 24
+#define ONE_TWENTY_EIGHT_MB 0x08000000
+#define EMPTY_P_ENTRY 0x00000002
+#define VMEM_P_ENTRY  0xB8007
+#define ADDR_BLACKOUT 0xFFFFF000
+#define PDIR_MASK     0x00000007
 
+uint32_t vmem_pt[PT_SIZE] __attribute__((aligned(PAGE_SIZE)));
 
-// static int num_p=0;
 static int32_t process_bit_map[]={0, 0, 0, 0, 0, 0};
 static int curr_pid = -1;
 static jump_table_t terminal_jt = {terminal_open, terminal_read, terminal_write, terminal_close };
@@ -499,9 +504,20 @@ int32_t getargs (uint8_t* buf, int32_t nbytes){
 }
 
 int32_t vidmap (uint8_t** screen_start){
-  uint8_t* giv_addr = *screen_start;
-  if(giv_addr > )
-	return -1;
+  int i;
+  // uint8_t* giv_addr = *screen_start;
+  if((uint32_t)screen_start < ONE_TWENTY_EIGHT_MB || (uint32_t)screen_start >= ONE_TWENTY_EIGHT_MB + FOUR_MB){
+    return -1;
+  }
+
+  //Choosing 132 MB to load prog into
+  *screen_start = ONE_TWENTY_EIGHT_MB + FOUR_MB;
+  for (i = 0; i < PT_SIZE; ++i){
+    vmem_pt[i] = EMPTY_P_ENTRY;
+  }
+  vmem_pt[0] = VMEM_P_ENTRY;
+  page_dir[528] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | PDIR_MASK);
+	return 0;
 }
 
 int32_t set_handler (int32_t signum, void* handler_address){
