@@ -5,6 +5,7 @@
 
 #define FILES_NUM		8
 #define FUN_PTR_NUM		3
+#define ARG_BUF_SIZE	200
 
 //yeezy just jumped over this
 typedef struct jump_man{
@@ -27,7 +28,7 @@ typedef struct proc_ctrl_b{
 	uint32_t ebp0;
 	uint32_t esp0;
 	file_desc_t file_arr[FILES_NUM];
-	// uint32_t next_idx;
+	uint8_t argbuf[ARG_BUF_SIZE];
 }pcb_t;
 
 // FD flags

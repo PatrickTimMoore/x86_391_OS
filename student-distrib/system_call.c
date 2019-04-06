@@ -124,6 +124,8 @@ int32_t execute (const uint8_t* command){
    uint32_t entry_p;
    uint8_t* proc_load;
    pcb_t* pcb_ptr;
+   char test_s[MAX_BUF_SIZE];
+   int argbound;
 
    // printf("Execute!\n");
    /*PARSE THE ARGUMENT*/
@@ -146,6 +148,41 @@ int32_t execute (const uint8_t* command){
 
    //Manually null terminate
    cmd_buf[i - cmdstart] = '\0';
+
+    // printf("Parsing arguments...\n");
+    // printf("cmdend: %d, cmdlen %d, char at cmdend: %c\n", cmdend, cmdlen, command[cmdend] );
+  // if(command[cmdend] == '\n'){
+    for(cmdstart = cmdend; (cmdstart < cmdlen) && (command[cmdstart] == ' '); cmdstart++);
+
+    // printf("new cmdstart: %d\n", cmdstart);
+    if(command[cmdstart] != '\0' && cmdstart < cmdlen){
+      // printf("We have arguments!\n");
+      for(cmdend = cmdstart; cmdend < cmdlen && command[cmdend] != ' ' && command[cmdend] != '\0'; cmdend++);
+      for(i = cmdstart; i < cmdend; i++){
+        // printf("Copying %c\n", command[i]);
+        test_s[i-cmdstart] = command[i];
+      }
+      //Manually null terminate
+      test_s[i - cmdstart] = '\0';
+      argbound = cmdend - cmdstart;
+    }
+    else{
+        test_s[0] = '\0';
+        argbound = 0;
+      // printf("Didn't get shit, spaces to end\n");
+    }
+  // }
+  // else{
+  //   printf("Didn't get shit, perfect end fit\n");
+  //   (pcb_ptr->argbuf)[0] = '\0';
+  // }
+  // printf("Here's args: ");
+  // printf(test_s);
+  // printf("\n");
+
+
+
+
 
    offset = 0;
    // printf("Executing %s...\n", cmd_buf);
@@ -202,9 +239,6 @@ int32_t execute (const uint8_t* command){
    page_dir[PROC_PD_IDX] = ((EIGHT_MB + (process_num * FOUR_MB)) & ADDR_BLACKOUT) + PROC_ATT;
    flush_tlb();
 
-   // printf("EIGHT_MB: %x, process_num: %d, FOUR_MB: %x, ADDR_BLACKOUT: %x\n", EIGHT_MB, process_num, FOUR_MB, ADDR_BLACKOUT);
-   // printf("Paged to %x with %x as index\n", PROC_PD_IDX << 22, ((EIGHT_MB + (process_num * FOUR_MB)) & ADDR_BLACKOUT) + PROC_ATT);
-
   /*PROCESS LOADER*/
   proc_load = (uint8_t *)EXEC_CPY_ADDR;
 
@@ -237,6 +271,7 @@ int32_t execute (const uint8_t* command){
 	//Set up pcb addressing
 	pcb_ptr = (pcb_t*)(EIGHT_MB - (process_num + 1)*EIGHT_KB);
 
+
 	//Assembly to get ebp0, esp0
   	asm volatile ("   \n\
     	movl %%esp, %%eax \n\
@@ -252,6 +287,12 @@ int32_t execute (const uint8_t* command){
     pcb_ptr->pid0 = curr_pid;
     curr_pid = process_num;
     pcb_ptr->pid = process_num;
+    for(i = 0; i < argbound; i++){
+      (pcb_ptr->argbuf)[i] = test_s[i];
+    }
+
+    //Self null-terminate
+    (pcb_ptr->argbuf)[argbound] = '\0';
 
     //initalize the file descriptors for stdin and stdout
     (pcb_ptr->file_arr)[0].file_ops_ptr = &terminal_jt;
@@ -403,6 +444,8 @@ int32_t open (const uint8_t* filename){
       (pcb_ptr->file_arr)[i].flags |= USED_MASK;
       (pcb_ptr->file_arr)[i].flags |= READ_MASK;
       // (pcb_ptr->file_arr)[i].flags | WRITE_MASK;
+
+      break;
     default:
       printf("open: %d is not valid filetype, go fix this\n", d.file_type);
       break;
@@ -441,16 +484,23 @@ int32_t close (int32_t fd){
 	return 0;
 }
 
-
-// int32_t init_pcb(){
-// 	return -1;
-// }
-
 int32_t getargs (uint8_t* buf, int32_t nbytes){
-	return -1;
+  int i;
+  int arglen = strlen((int8_t*)(get_curr_pcb()->argbuf));
+  if(!buf){return -1;}
+
+	if(arglen && arglen < nbytes){
+    for (i = 0; i < nbytes; ++i){
+      buf[i] = (get_curr_pcb()->argbuf)[i];
+    }
+    return 0;
+  }
+  else{return -1;}
 }
 
 int32_t vidmap (uint8_t** screen_start){
+  uint8_t* giv_addr = *screen_start;
+  if(giv_addr > )
 	return -1;
 }
 
