@@ -2,6 +2,16 @@
 
 #ifndef _KEYBOARD_HANDLER_H
 #define _KEYBOARD_HANDLER_H
+
+#define BUFFER_SIZE           127
+
+typedef struct term{
+	uint8_t keyboard_buffer[BUFFER_SIZE + 1];
+	uint32_t curs_x;
+	uint32_t curs_y;
+
+}terminal_t;
+
 /* function used to initialize/unmask the keyboard */
 void init_keyboard();
 

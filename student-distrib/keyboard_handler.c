@@ -63,9 +63,13 @@
 #define CTRLKEY               0x1D
 #define ALTKEY                0x38
 #define ENTER                 '\n'
+#define F1                    0x3B
+#define F2                    0x3C
+#define F3                    0x3D
 //the size of keyboard buffer
 #define BUFFER_SIZE           127
 #define EOS                   NULL
+#define NUM_TERM              3
 
 static int SHIFTKEYACTIVE = 0;
 static int CAPSLOCKKEYACTIVE = 0;
@@ -73,11 +77,15 @@ static int CTRLACTIVE = 0;
 static int ALTACTIVE = 0;
 //the buffer for the keyboard
 static uint8_t keyboard_buffer[BUFFER_SIZE + 1];
+static uint32_t term_num = 0;
 static int buffer_length = 0;
 
 //flags used for terminal driver
 static int read_flag = 0;
 static int open_flag = 8;
+
+
+terminal_t terms[NUM_TERM];
 
 /* Uppercase scancode translater */
 static uint8_t scancodeUpper[ALPHANUMERICVALUES] =
@@ -183,6 +191,19 @@ void keyboard_handler(){
         /*   No more than 127 characters can be typed  */
         /* 128th character is reserved for 'Enter' key */
             if(scancodeVal >= SCANCODEPRESS && scancodeVal < SCANCODERELEASE){
+                //check if the alt key is pressed
+                if(ALTACTIVE){
+                  if(scancodeVal == F1){
+                    term_num = 0;
+                  }
+                  else if(scancodeVal == F2){
+                    term_num = 1;
+                  }
+                  else if(scancodeVal == F3){
+                    term_num = 2;
+                  }
+                    
+                }
             	  //check if the Ctrl key is hit
                 if(CTRLACTIVE){
                 	  if(scancodeVal == SCANCODE_L){
