@@ -511,12 +511,13 @@ int32_t vidmap (uint8_t** screen_start){
   }
 
   //Choosing 132 MB to load prog into
-  *screen_start = ONE_TWENTY_EIGHT_MB + FOUR_MB;
+  *screen_start = (uint8_t*)ONE_TWENTY_EIGHT_MB + FOUR_MB;
   for (i = 0; i < PT_SIZE; ++i){
     vmem_pt[i] = EMPTY_P_ENTRY;
   }
   vmem_pt[0] = VMEM_P_ENTRY;
-  page_dir[528] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | PDIR_MASK);
+  page_dir[33] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | PDIR_MASK);\
+  flush_tlb();
 	return 0;
 }
 
