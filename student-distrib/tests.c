@@ -1060,8 +1060,8 @@ void launch_tests(){
 	//test the terminal driver
 	// terminal_driver_test();
 
-    unsigned char str[] = "   pingpong  ";
-    execute(str);
+    // unsigned char str[] = "   pingpong  ";
+    // execute(str);
 
     
 

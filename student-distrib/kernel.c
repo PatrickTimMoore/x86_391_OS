@@ -13,6 +13,7 @@
 #include "keyboard_handler.h"
 #include "paging.h"
 #include "filesystem.h"
+#include "system_call.h"
 
 
 #define RUN_TESTS
@@ -178,7 +179,8 @@ void entry(unsigned long magic, unsigned long addr) {
     launch_tests();
 #endif
     /* Execute the first program ("shell") ... */
-
+    uint8_t shell_name[] = "shell";
+    execute(shell_name);
     /* Spin (nicely, so we don't chew up cycles) */
     asm volatile (".1: hlt; jmp .1;");
 }

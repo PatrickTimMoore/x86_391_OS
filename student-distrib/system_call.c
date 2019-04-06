@@ -30,7 +30,7 @@
 #define ENTRY_PT_OFFSET 24
 
 
-static int num_p=0;
+// static int num_p=0;
 static int32_t process_bit_map[]={0, 0, 0, 0, 0, 0};
 static int curr_pid = -1;
 static jump_table_t terminal_jt = {terminal_open, terminal_read, terminal_write, terminal_close };
@@ -192,10 +192,10 @@ int32_t execute (const uint8_t* command){
 
    //all the process are used
    if(process_num == -1){
-       printf("All process are taken up");
+       printf("All process are taken up\n");
        return -1;
    }
-   num_p++;
+   // num_p++;
    /*SET UP PAGING*/
    //Set up the 4MB page for our process
    // printf("Paged to %x\n", (EIGHT_MB + (process_num * FOUR_MB)) );
@@ -274,7 +274,7 @@ int32_t execute (const uint8_t* command){
     tss.esp0 = EIGHT_MB - process_num*EIGHT_KB - FOUR;
     tss.ss0 = KERNEL_DS;
 
-    printf("Got here. \n");
+    // printf("Got here. \n");
     sti();
 
     asm volatile ("   \n\
@@ -346,7 +346,7 @@ int32_t write (int32_t fd, const void* buf, int32_t nbytes){
 
 
 int32_t open (const uint8_t* filename){
-  printf("Syscall: open\n");
+  // printf("Syscall: open\n");
   int i;
 	dentry_t d;
   pcb_t* pcb_ptr;
