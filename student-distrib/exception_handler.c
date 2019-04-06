@@ -115,7 +115,9 @@
  void exception_handler_8(){
  	printf("Double Fault Exception\n");
   if(get_curr_pid() == -1){while(1);}
-  else{halt(0);}
+  else{
+    halt(0);
+  }
  }
 
  /*
