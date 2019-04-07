@@ -7,8 +7,11 @@
 
 typedef struct term{
 	uint8_t keyboard_buffer[BUFFER_SIZE + 1];
+	uint8_t buffer_index;
 	uint32_t curs_x;
 	uint32_t curs_y;
+	uint8_t* vidmem;
+	uint32_t act_pid;
 
 }terminal_t;
 
@@ -30,5 +33,11 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes);
 /*this function writes from the buf to the screen*/
 int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes);
 
-#endif
+/*initial all the terminals when we first launch the OS*/
+int32_t init_term();
 
+/*execute three shells, one a terminal*/
+int32_t exec_shell_term(int term);
+/*switch terminal */
+int32_t switch_terminal(int new_term);
+#endif

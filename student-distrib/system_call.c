@@ -29,23 +29,33 @@
 #define EMPTY_PD_ENTRY  0x00000002
 #define ENTRY_PT_OFFSET 24
 #define ONE_TWENTY_EIGHT_MB 0x08000000
-#define EMPTY_P_ENTRY 0x00000002
-#define VMEM_P_ENTRY  0xB8007
-#define ADDR_BLACKOUT 0xFFFFF000
-#define PDIR_MASK     0x00000007
+#define EMPTY_P_ENTRY   0x00000002
+#define VMEM_P_ENTRY    0xB8007
+#define ADDR_BLACKOUT   0xFFFFF000
+#define PDIR_MASK       0x00000007
+#define ONE             1
+#define TWO             2
+#define THREE           3
+#define BYTE_SIZE       8
+#define VIDMAP_IDX      33
 
 uint32_t vmem_pt[PT_SIZE] __attribute__((aligned(PAGE_SIZE)));
 
 static int32_t process_bit_map[]={0, 0, 0, 0, 0, 0};
 static int curr_pid = -1;
-static jump_table_t terminal_jt = {terminal_open, terminal_read, terminal_write, terminal_close };
+static jump_table_t terminal_jt = {terminal_open, terminal_read, terminal_write, terminal_close};
 static jump_table_t rtc_jt = {rtc_open, rtc_read, rtc_write, rtc_close};
 static jump_table_t dir_jt = {open_dir, read_dir, write_dir, close_dir};
 static jump_table_t file_jt = {open_file, read_file, write_file, close_file};
 
 
+/* Function: int32_t halt(uint8_t status)
+*  Description: This is a system call
+*  inputs: 
+*  ouputs: 0 for success and -1 for failure
+*  effects: 
+*/
 int32_t halt (uint8_t status){
-
   pcb_t* pcb_ptr = (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
   int32_t par_pid = pcb_ptr->pid0;
   int i;
@@ -86,21 +96,14 @@ int32_t halt (uint8_t status){
 
    }
    else{
-
       // printf("Halt: Paging to %x\n", (EIGHT_MB + (par_pid * FOUR_MB)));
       page_dir[PROC_PD_IDX] = ((EIGHT_MB + (par_pid * FOUR_MB)) & ADDR_BLACKOUT) + PROC_ATT;
-   
       flush_tlb();
    }
    // printf("Repaged!\n");
 
-
-
   tss.esp0 = EIGHT_MB - (EIGHT_KB*par_pid) - FOUR;
   tss.ss0 = KERNEL_DS;
- 
-
-
 
   // printf("Bookkeeping set\n");
 
@@ -121,6 +124,14 @@ int32_t halt (uint8_t status){
 	return 0;
 }
 
+
+
+/* Function: int32_t execute (const uint8_t* command)
+*  Description: This is a system call
+*  inputs: 
+*  ouputs: 0 for success and -1 for failure
+*  effects: 
+*/
 int32_t execute (const uint8_t* command){
    int i, cmdstart, cmdend, cmdlen, byt, offset;
    dentry_t d;
@@ -176,18 +187,6 @@ int32_t execute (const uint8_t* command){
         argbound = 0;
       // printf("Didn't get shit, spaces to end\n");
     }
-  // }
-  // else{
-  //   printf("Didn't get shit, perfect end fit\n");
-  //   (pcb_ptr->argbuf)[0] = '\0';
-  // }
-  // printf("Here's args: ");
-  // printf(test_s);
-  // printf("\n");
-
-
-
-
 
    offset = 0;
    // printf("Executing %s...\n", cmd_buf);
@@ -207,9 +206,9 @@ int32_t execute (const uint8_t* command){
    // printf("Check _ELF\n");
    //check for (weird shit)ELF
    if(buf[0] != DEL &&
-   	  buf[1] != E   &&
-   	  buf[2] != L 	&&
-   	  buf[3] != F){
+   	  buf[ONE] != E   &&
+   	  buf[TWO] != L 	&&
+   	  buf[THREE] != F){
    	printf("File is not executable!\n");
    	return -1;
    }
@@ -219,7 +218,7 @@ int32_t execute (const uint8_t* command){
 
    read_data(d.inode_num, ENTRY_PT_OFFSET, buf, FOUR);
 
-   entry_p = (buf[3] << 8*3) + (buf[2] << 8*2) + (buf[1] << 8*1) + buf[0];
+   entry_p = (buf[THREE] << BYTE_SIZE*THREE) + (buf[TWO] << BYTE_SIZE*TWO) + (buf[ONE] << BYTE_SIZE*ONE) + buf[0];
    // printf("%x\n", entry_p);
 
    int32_t process_num = -1;
@@ -346,6 +345,13 @@ int32_t execute (const uint8_t* command){
    	return 0;
 }
 
+
+/* Function: int32_t read (int32_t fd, void* buf, int32_t nbytes)
+*  Description: This is a system call
+*  inputs: 
+*  ouputs: 0 for success and -1 for failure
+*  effects: 
+*/
 int32_t read (int32_t fd, void* buf, int32_t nbytes){
   // printf("Syscall: read\n");
   pcb_t* pcb_ptr;
@@ -369,6 +375,13 @@ int32_t read (int32_t fd, void* buf, int32_t nbytes){
 
 
 
+
+/* Function: int32_t write (int32_t fd, const void* buf, int32_t nbytes)
+*  Description: This is a system call
+*  inputs: 
+*  ouputs: 0 for success and -1 for failure
+*  effects: 
+*/
 int32_t write (int32_t fd, const void* buf, int32_t nbytes){
   // printf("Syscall: write (%d)\n", fd);
   pcb_t* pcb_ptr;
@@ -391,6 +404,13 @@ int32_t write (int32_t fd, const void* buf, int32_t nbytes){
 
 
 
+
+/* Function: int32_t open (const uint8_t* filename)
+*  Description: This is a system call
+*  inputs: 
+*  ouputs: 0 for success and -1 for failure
+*  effects: 
+*/
 int32_t open (const uint8_t* filename){
   // printf("Syscall: open\n");
   int i;
@@ -461,6 +481,13 @@ int32_t open (const uint8_t* filename){
 	return i;
 }
 
+
+/* Function: int32_t close (int32_t fd)
+*  Description: This is a system call
+*  inputs: 
+*  ouputs: 0 for success and -1 for failure
+*  effects: 
+*/
 int32_t close (int32_t fd){
   pcb_t* pcb_ptr;
 
@@ -489,6 +516,13 @@ int32_t close (int32_t fd){
 	return 0;
 }
 
+
+/* Function: int32_t getargs (uint8_t* buf, int32_t nbytes)
+*  Description: This is a system call
+*  inputs: 
+*  ouputs: 0 for success and -1 for failure
+*  effects: 
+*/
 int32_t getargs (uint8_t* buf, int32_t nbytes){
   int i;
   int arglen = strlen((int8_t*)(get_curr_pcb()->argbuf));
@@ -503,6 +537,13 @@ int32_t getargs (uint8_t* buf, int32_t nbytes){
   else{return -1;}
 }
 
+
+/* Function: int32_t vidmap (uint8_t** screen_start)
+*  Description: This is a system call
+*  inputs: 
+*  ouputs: 0 for success and -1 for failure
+*  effects: 
+*/
 int32_t vidmap (uint8_t** screen_start){
   int i;
   // uint8_t* giv_addr = *screen_start;
@@ -516,28 +557,63 @@ int32_t vidmap (uint8_t** screen_start){
     vmem_pt[i] = EMPTY_P_ENTRY;
   }
   vmem_pt[0] = VMEM_P_ENTRY;
-  page_dir[33] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | PDIR_MASK);\
+  page_dir[VIDMAP_IDX] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | PDIR_MASK);
   flush_tlb();
 	return 0;
 }
 
+
+/* Function: int32_t set_handler (int32_t signum, void* handler_address)
+*  Description: This is a system call
+*  inputs: 
+*  ouputs: 0 for success and -1 for failure
+*  effects: 
+*/
 int32_t set_handler (int32_t signum, void* handler_address){
 	return -1;
 }
 
+
+/* Function: int32_t ()
+*  Description: This is a system call
+*  inputs: 
+*  ouputs: 0 for success and -1 for failure
+*  effects: 
+*/
 int32_t sigreturn (void){
 	return -1;
 }
 
 
+
+/* Function: int32_t ()
+*  Description:
+*  inputs: 
+*  ouputs: 0 for success and -1 for failure
+*  effects: 
+*/
 extern pcb_t* get_curr_pcb(){
   return (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
 }
 
+
+/* Function: int32_t ()
+*  Description:
+*  inputs: 
+*  ouputs: 0 for success and -1 for failure
+*  effects: 
+*/
 extern int32_t get_curr_pid(){
   return curr_pid;
 }
 
+
+/* Function: int32_t ()
+*  Description:
+*  inputs: 
+*  ouputs: 0 for success and -1 for failure
+*  effects: 
+*/
 extern pcb_t* get_pcb(int gpid){
   return (pcb_t*)(EIGHT_MB - (gpid + 1)*EIGHT_KB);
 
