@@ -323,13 +323,17 @@ int32_t read_dir(int32_t fd, void* buf, int32_t nbytes){
 	// printf("read_dir called!\n");
 	int i; //, ret;
 	//Treat printfs such as comments!
+	
+	pcb_t* pcb_ptr;
+	pcb_ptr = get_curr_pcb();
 
 	//if there's no bytes requested
 	if(nbytes == 0){
 		return 0;
 	}
-	if(!currdir.open){
-		printf("%s\n", "read_dir ERROR: No dir currently open!\n");
+	if( (((pcb_ptr->file_arr)[fd].flags & USED_MASK) == 0) ||
+   		(((pcb_ptr->file_arr)[fd].flags & READ_MASK) == 0)){
+		printf("%s\n", "read_dir ERROR: File not in readable state\n");
 		return -1;
 	}
 	if(buf == NULL){
@@ -345,7 +349,7 @@ int32_t read_dir(int32_t fd, void* buf, int32_t nbytes){
 	dentry_t d;
 	// printf("About to read %d bytes from dir file %d\n", nbytes, currdir.curr_idx);
 	//Copy into our local dentry
-	if(!read_dentry_by_index(currdir.curr_idx, &d)){ //assuming if this is unsuccessful we're out of files
+	if(!read_dentry_by_index((pcb_ptr->file_arr)[fd].file_pos, &d)){ //assuming if this is unsuccessful we're out of files
 
 		// printf("read_dir: Got a dentry, copying file_name....\n");
 		//accomodate for null character
@@ -375,8 +379,8 @@ int32_t read_dir(int32_t fd, void* buf, int32_t nbytes){
 
 		// printf("read_dir: Done, moving up file%d....\n", i);
 		//No matter how much we copy, move on to next file for next read
-		currdir.curr_idx++;
-		currdir.bytes_read = 0;
+		// currdir.curr_idx++;
+		(pcb_ptr->file_arr)[fd].file_pos++;;
 
 		// printf("\nReturning %d...\n", i);
 		if(i == MAX_FNAME_LEN){
@@ -416,22 +420,23 @@ int32_t open_dir(const uint8_t* filename){
 	//Treat printf contents as comments as well
 	// printf("open_dir called!\n");
 	//Try to read
-	if(		!read_dentry_by_name(filename, &(currdir.dentry))	){
-		if(currdir.dentry.file_type != 1){
-			printf("open_dir ERROR: open_dir failed (Not a dir). Closing dir...\n" );
-			currdir.open = 0;
-			currdir.bytes_read = 0;
-			currdir.curr_idx = 0;
-			return -1;
-		}
-		currdir.open = 1;
-		currdir.bytes_read = 0;
-		currdir.curr_idx = 0;
-		// printf("Successfully opened dir\n");
-		return 0;
-	}
+	
+	// if(		!read_dentry_by_name(filename, &(currdir.dentry))	){
+	// 	if(currdir.dentry.file_type != 1){
+	// 		printf("open_dir ERROR: open_dir failed (Not a dir). Closing dir...\n" );
+	// 		currdir.open = 0;
+	// 		currdir.bytes_read = 0;
+	// 		currdir.curr_idx = 0;
+	// 		return -1;
+	// 	}
+	// 	currdir.open = 1;
+	// 	currdir.bytes_read = 0;
+	// 	currdir.curr_idx = 0;
+	// 	// printf("Successfully opened dir\n");
+	// 	return 0;
+	// }
 
-	printf("%s\n", "open_dir ERROR: open_dir failed (dir not found)\n");
+	// printf("%s\n", "open_dir ERROR: open_dir failed (dir not found)\n");
 	return -1;
 }
 
@@ -446,9 +451,9 @@ int32_t open_dir(const uint8_t* filename){
 int32_t close_dir(int32_t fd){
 	//Just close the file tracking; set everything afresh
 	// printf("close_dir called!\n");
-	currdir.open = 0;
-	currdir.bytes_read = 0;
-	currdir.curr_idx = 0;
+	// currdir.open = 0;
+	// currdir.bytes_read = 0;
+	// currdir.curr_idx = 0;
 	return 0;
 }
 
