@@ -34,6 +34,8 @@
 #include "lib.h"
 #include "keyboard_handler.h"
 #include "i8259.h"
+#include "paging.h"
+#include "system_call.h"
 
 #define IRQ1KEYBOARD          0x01
 #define KEYBOARDDATAPORT      0x60
@@ -69,23 +71,38 @@
 //the size of keyboard buffer
 #define BUFFER_SIZE           127
 #define EOS                   NULL
-#define NUM_TERM              3
+#define FORTY_MB              0x2800000
+#define FOUR_KB               4096     
+#define PD_ATTRIB             0x7
+#define EMPTY_PT_ENTRY        0x00000002
+#define VIDEO               0xB8000
+#define NUM_COLS            80
+#define NUM_ROWS            25
+#define ATTRIB              0x7
+#define _32_MB              0x2000000
+#define _132_MB             0x8400000
+#define ADDR_BLACKOUT   0xFFFFF000
+
 
 static int SHIFTKEYACTIVE = 0;
 static int CAPSLOCKKEYACTIVE = 0;
 static int CTRLACTIVE = 0;
 static int ALTACTIVE = 0;
 //the buffer for the keyboard
-static uint8_t keyboard_buffer[BUFFER_SIZE + 1];
-static uint32_t term_num = 0;
-static int buffer_length = 0;
+//static uint8_t keyboard_buffer[BUFFER_SIZE + 1];
+// static uint32_t term_num = 0;
+//static int terms[term_num].buffer_index = 0;
 
 //flags used for terminal driver
 static int read_flag = 0;
 static int open_flag = 8;
 
 
-terminal_t terms[NUM_TERM];
+
+uint32_t fakemem_pt[PT_SIZE] __attribute__((aligned(PAGE_SIZE)));
+
+
+// terminal_t terms[NUM_TERM];
 
 /* Uppercase scancode translater */
 static uint8_t scancodeUpper[ALPHANUMERICVALUES] =
@@ -180,10 +197,10 @@ void keyboard_handler(){
             ALTACTIVE = 0;
             break;
         case BACKSPACEKEY:
-            if(buffer_length != 0){
+            if(terms[term_num].buffer_index != 0){
                 backspace_helper();
-                buffer_length--;
-                keyboard_buffer[buffer_length]= NULL;
+                terms[term_num].buffer_index--;
+                (terms[term_num].keyboard_buffer)[terms[term_num].buffer_index]= NULL;
             }
             break;
         default:
@@ -194,13 +211,16 @@ void keyboard_handler(){
                 //check if the alt key is pressed
                 if(ALTACTIVE){
                   if(scancodeVal == F1){
-                    term_num = 0;
+                    switch_terminal(0);
+                    // printf("F1\n");
                   }
                   else if(scancodeVal == F2){
-                    term_num = 1;
+                    switch_terminal(1);
+                    // printf("F2\n");
                   }
                   else if(scancodeVal == F3){
-                    term_num = 2;
+                    switch_terminal(2);
+                    // printf("F3\n");
                   }
                     
                 }
@@ -215,10 +235,10 @@ void keyboard_handler(){
                 	  }
                 //check if the enter key is hit
                 } else if(scancodeVal == ENTERKEY){
-              		  read_flag = 1; //sets flag for terminal to read the keyboard_buffer
-                    if(buffer_length <= BUFFER_SIZE){
+              		  read_flag = 1; //sets flag for terminal to read the (terms[term_num].keyboard_buffer)
+                    if(terms[term_num].buffer_index <= BUFFER_SIZE){
                         putc(ENTER); // prints newLine character
-                        keyboard_buffer[buffer_length++]=ENTER;
+                        (terms[term_num].keyboard_buffer)[terms[term_num].buffer_index++]=ENTER;
                     }
                 //checks if it is a recognizable key
                 } else if(scancodeLower[scancodeVal] == NULL){
@@ -227,27 +247,27 @@ void keyboard_handler(){
               	} else if(SHIFTKEYACTIVE && CAPSLOCKKEYACTIVE){
                     //checks case of key that should be typed
                     if(isLetter){
-                        if(buffer_length < BUFFER_SIZE){
+                        if(terms[term_num].buffer_index < BUFFER_SIZE){
                         	  putc(scancodeLower[scancodeVal]); // Sends data from keyboard to coonsole
-                        	  keyboard_buffer[buffer_length++]=scancodeLower[scancodeVal];
+                        	  (terms[term_num].keyboard_buffer)[terms[term_num].buffer_index++]=scancodeLower[scancodeVal];
                         }
                     //checks case of key that should be typed
                     } else {
-                         if(buffer_length < BUFFER_SIZE){
+                         if(terms[term_num].buffer_index < BUFFER_SIZE){
                          	  putc(scancodeUpper[scancodeVal]); // Sends data from keyboard to coonsole
-                        	  keyboard_buffer[buffer_length++]=scancodeUpper[scancodeVal];
+                        	  (terms[term_num].keyboard_buffer)[terms[term_num].buffer_index++]=scancodeUpper[scancodeVal];
                          }
                     }
                 //checks case of key that should be typed
                 } else if((CAPSLOCKKEYACTIVE && isLetter) || SHIFTKEYACTIVE){
-                     if(buffer_length < BUFFER_SIZE){
+                     if(terms[term_num].buffer_index < BUFFER_SIZE){
                      	    putc(scancodeUpper[scancodeVal]); // Sends data from keyboard to coonsole
-                        	keyboard_buffer[buffer_length++]=scancodeUpper[scancodeVal];
+                        	(terms[term_num].keyboard_buffer)[terms[term_num].buffer_index++]=scancodeUpper[scancodeVal];
                      }
                 } else {
-                     if(buffer_length < BUFFER_SIZE){
+                     if(terms[term_num].buffer_index < BUFFER_SIZE){
                           putc(scancodeLower[scancodeVal]); // Sends data from keyboard to coonsole
-                        	keyboard_buffer[buffer_length++]=scancodeLower[scancodeVal];
+                        	(terms[term_num].keyboard_buffer)[terms[term_num].buffer_index++]=scancodeLower[scancodeVal];
                      }
                 }
             }
@@ -339,11 +359,11 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
 			   break;
 		  }
 		  //check if we hit the EOS
-		  if(keyboard_buffer[loop] == NULL || (keyboard_buffer[loop - 1] == ENTER && loop > 0)){
+		  if((terms[term_num].keyboard_buffer)[loop] == NULL || ((terms[term_num].keyboard_buffer)[loop - 1] == ENTER && loop > 0)){
 			   break;
 		  }
 		  //copy into the new buffer
-		  buf_uint[loop]= keyboard_buffer[loop];
+		  buf_uint[loop]= (terms[term_num].keyboard_buffer)[loop];
 	}
       //mark the end as the EOS
       buf_uint[loop] = EOS;
@@ -357,17 +377,17 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
          //Pushes left over characters in buffer after newLine
          // to the front of the buffer. Clears the rest.
          if(nullSeen){
-            keyboard_buffer[i] = NULL;
+            (terms[term_num].keyboard_buffer)[i] = NULL;
          } else {
-            if(keyboard_buffer[loop] == NULL || loop >= BUFFER_SIZE){
+            if((terms[term_num].keyboard_buffer)[loop] == NULL || loop >= BUFFER_SIZE){
                 nullSeen = 1;
             } else {
                 overflowedChar++;
             }
-            keyboard_buffer[i]=keyboard_buffer[loop++];
+            (terms[term_num].keyboard_buffer)[i]=(terms[term_num].keyboard_buffer)[loop++];
          }
       }
-      buffer_length=overflowedChar;
+      terms[term_num].buffer_index=overflowedChar;
      
       //return the number of bytes read correctly
       return bytes_read;
@@ -404,9 +424,9 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
 		bytes_written++;
 	}
   loop=0;
-  while(keyboard_buffer[loop] != NULL){
-      if(keyboard_buffer[loop] == '\n'){
-          putc(keyboard_buffer[loop++]);
+  while((terms[term_num].keyboard_buffer)[loop] != NULL){
+      if((terms[term_num].keyboard_buffer)[loop] == '\n'){
+          putc((terms[term_num].keyboard_buffer)[loop++]);
           uint8_t bufNew[200];
           terminal_open(0);
           terminal_read(0, bufNew, 200);
@@ -414,7 +434,98 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
           terminal_close(0);
           break;
       }
-      putc(keyboard_buffer[loop++]);
+      putc((terms[term_num].keyboard_buffer)[loop++]);
   }
 	return bytes_written;
 }
+
+
+int32_t init_term(){
+  int i, j;
+  for (j = 0; j < PT_SIZE; ++j){
+    fakemem_pt[j] = EMPTY_PT_ENTRY;
+  }
+  for(i = 0; i < 3; i++){
+    terms[i].buffer_index = 0;
+    terms[i].keyboard_buffer[0] = '\0';
+    terms[i].curs_x = 0;
+    terms[i].curs_y = 0;
+    terms[i].act_pid = -1;
+    terms[i].init_ = 0;
+    fakemem_pt[i] = (((uint32_t)_32_MB + (i*FOUR_KB)) | PD_ATTRIB);
+  }
+
+  page_dir[33] = (((uint32_t)fakemem_pt & 0xFFFFF000) | PD_ATTRIB);
+  flush_tlb();
+
+  for (i = 0; i < 3; ++i){
+    terms[i].vidmem = (uint8_t*)(_132_MB + (i*FOUR_KB));
+    for (j = 0; j < NUM_ROWS * NUM_COLS; j++) {
+        *(uint8_t *)(terms[i].vidmem + (j << 1)) = ' ';
+        *(uint8_t *)(terms[i].vidmem + (j << 1) + 1) = ATTRIB;
+    }
+  }
+  return 0;
+}
+
+
+int32_t exec_shell_term(int term){
+    set_cursor_pos(terms[term].curs_x, terms[term].curs_y);
+    term_num = term;
+    terms[term].init_ = 1;
+    execute((uint8_t*)"shell");
+    return 0;
+}
+
+
+
+/*
+ ** int32_t switch_terminal(int32_t new_term)
+ ** Inputs: new_term -- The new terminal to switch to
+ ** nbytes: number of bytes to write to screen
+ ** Return value: the number of bytes write correctly
+ ** Description: The function we call to facilitate the switch between terminals;
+ ** accomodates for executing the shell and saving/loading vidmem
+ ** This function write nbytes bytes from the keyboard buffer to the screen.
+*/
+int32_t switch_terminal(int new_term){
+  int i = 0;
+  int flag = 0;
+  for(i = 0; i < 6; i++){
+    if(!process_bit_map[i]){
+      flag = 1;
+    }
+  }
+  if((!flag) && (!terms[new_term].init_)){
+    printf("No more free processes!\n");
+    return -1;
+  }
+
+  if( new_term <0 || new_term >=3){
+      return -1;
+  }
+  //check if we try to switch the same terminal
+  if(new_term == term_num)
+      return 0;
+  //first we will save the old video memory
+  memcpy((void*)terms[term_num].vidmem, (void*)VIDEO, FOUR_KB);
+  //then we will load the new video memory
+  memcpy((void*)VIDEO, (void*)terms[new_term].vidmem, FOUR_KB);
+  //save the old cursor
+  // terms[term_num].curs_x = 5;
+  // terms[term_num].curs_y = 5;
+  //set the new cursor
+  //change the terminal number to new one
+  // printf("                                                   term_num: %d, new_term: %d\n", term_num, new_term );
+  term_num = new_term;
+  // printf("                                                  (2) term_num: %d, new_term: %d\n", term_num, new_term );
+
+  set_cursor_pos(terms[new_term].curs_x, terms[new_term].curs_y);
+  //if there is no process running, we will execute shell
+  if(!terms[new_term].init_){
+    terms[new_term].init_ = 1;
+    exec_shell_term(new_term);
+  }
+
+  return 0;
+} 

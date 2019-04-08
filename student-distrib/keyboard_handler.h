@@ -2,8 +2,8 @@
 
 #ifndef _KEYBOARD_HANDLER_H
 #define _KEYBOARD_HANDLER_H
-
 #define BUFFER_SIZE           127
+#define NUM_TERM              3
 
 typedef struct term{
 	uint8_t keyboard_buffer[BUFFER_SIZE + 1];
@@ -11,9 +11,22 @@ typedef struct term{
 	uint32_t curs_x;
 	uint32_t curs_y;
 	uint8_t* vidmem;
-	uint32_t act_pid;
+	int32_t act_pid;
+	uint32_t init_;  //Don't judge us
+	uint32_t t_esp;
+	uint32_t t_ebp;
 
 }terminal_t;
+
+
+
+//static int terms[term_num].buffer_index = 0;
+
+
+// uint32_t fakemem_pt[PT_SIZE] __attribute__((aligned(PAGE_SIZE)));
+
+uint32_t term_num;
+terminal_t terms[NUM_TERM];
 
 /* function used to initialize/unmask the keyboard */
 void init_keyboard();

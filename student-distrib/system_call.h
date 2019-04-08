@@ -36,7 +36,7 @@ typedef struct proc_ctrl_b{
 // bit 1 = read
 // bit 2 = write
 
-
+extern int32_t process_bit_map[6];
 
 //yeet
 extern int32_t halt (uint8_t status);

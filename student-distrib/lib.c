@@ -30,9 +30,9 @@ void clear(void) {
         *(uint8_t *)(video_mem + (i << 1) + 1) = ATTRIB;
     }
     //set the cursur to (0, 0)
-    screen_x=0; 
-    screen_y=0;
-    set_cursor_pos(screen_x, screen_y);
+    terms[term_num].curs_x=0; 
+    terms[term_num].curs_y=0;
+    set_cursor_pos(0, 0);
 }
 
 /* Standard printf().
@@ -181,12 +181,14 @@ int32_t puts(int8_t* s) {
 void putc(uint8_t c) {
     if(c == '\n' || c == '\r') {
         //change to a new line
-        set_cursor_pos(0, screen_y+1);
+        terms[term_num].curs_y++;
+        set_cursor_pos(0, terms[term_num].curs_y);
     } else {
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
+        *(uint8_t *)(video_mem + ((NUM_COLS * terms[term_num].curs_y + terms[term_num].curs_x) << 1)) = c;
+        *(uint8_t *)(video_mem + ((NUM_COLS * terms[term_num].curs_y + terms[term_num].curs_x) << 1) + 1) = ATTRIB;
         //set the new cursor
-        set_cursor_pos(screen_x+1, screen_y);
+        terms[term_num].curs_x++;
+        set_cursor_pos(terms[term_num].curs_x, terms[term_num].curs_y);
     }
 }
 
@@ -522,28 +524,28 @@ void scroll_screen_up(){
 */
 void set_cursor_pos(int32_t x, int32_t y)
  {
-    //set the new screen_x and screen_y
-    screen_x = x;
-    screen_y = y;
+    //set the new terms[term_num].curs_x and terms[term_num].curs_y
+    terms[term_num].curs_x = x;
+    terms[term_num].curs_y = y;
     //check if the x and y is less than 0
-    if( (screen_x < 0) || (screen_y < 0) ){
+    if( (terms[term_num].curs_x < 0) || (terms[term_num].curs_y < 0) ){
         return;
     }
     //check if we need to change to a new line
-    if(screen_x >=NUM_COLS){
-        screen_x=0;
-        screen_y++;
+    if(terms[term_num].curs_x >=NUM_COLS){
+        terms[term_num].curs_x=0;
+        terms[term_num].curs_y++;
     }
     //check if the y is out of bound
-    if( screen_y >= NUM_ROWS ){
+    if( terms[term_num].curs_y >= NUM_ROWS ){
         //scroll up the screen
         scroll_screen_up();
-        screen_x=0;
-        screen_y=NUM_ROWS-1;
+        terms[term_num].curs_x=0;
+        terms[term_num].curs_y=NUM_ROWS-1;
     }
 
     //calculate the offset from the beginning of screen
-    uint16_t offset= screen_y * NUM_COLS + screen_x;
+    uint16_t offset= terms[term_num].curs_y * NUM_COLS + terms[term_num].curs_x;
     //calculate the values write to the low and high cursor location
     uint8_t low= offset & LOW_MASK;
     uint8_t high= (offset & HIGH_MASK) >> 8;
@@ -565,18 +567,20 @@ void set_cursor_pos(int32_t x, int32_t y)
 */
 void backspace_helper(){
     //check if we are at the upper left corner
-    if(screen_x==0 && screen_y==0){
+    if(terms[term_num].curs_x==0 && terms[term_num].curs_y==0){
         //do nothing
         return;
     }
     //check if we are at the start of a line
-    if(screen_x == 0){
-        set_cursor_pos(NUM_COLS-1, screen_y-1);
+    if(terms[term_num].curs_x == 0){
+        terms[term_num].curs_y--;
+        set_cursor_pos(NUM_COLS-1, terms[term_num].curs_y);
     }
     else{
-        set_cursor_pos(screen_x-1, screen_y);
+        terms[term_num].curs_x--;
+        set_cursor_pos(terms[term_num].curs_x, terms[term_num].curs_y);
     }
 
     //delete the old char
-    *(uint8_t *)(video_mem + ((NUM_COLS*screen_y + screen_x) << 1)) = ' ';
+    *(uint8_t *)(video_mem + ((NUM_COLS*terms[term_num].curs_y + terms[term_num].curs_x) << 1)) = ' ';
 }
