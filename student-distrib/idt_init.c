@@ -12,6 +12,7 @@
 #define KEYBOARD_NUM     0x21
 #define RTC_NUM          0x28
 #define EXCEPTION_NUM    32
+#define PIT_NUM          0x20
 
 
 //list of exception handler address used to handle exceptions
@@ -93,6 +94,9 @@ int init_idt(){
       else if(i == RTC_NUM){
         	//set the offset for the RTC interrupt
         	SET_IDT_ENTRY(idt[i], rtc_interrupt);
+      }
+      else if (i == PIT_NUM){
+          SET_IDT_ENTRY(idt[i], pit_interrupt);
       }
       else{
         	//the entries are not used yet

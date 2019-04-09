@@ -28,6 +28,8 @@ func_name:                                  ;\
  INTERRUPT_HANDLER(keyboard_interrupt, keyboard_handler);
  /*the interface for rtc handler*/
  INTERRUPT_HANDLER(rtc_interrupt, rtc_handler);
+ /*the interface for pit handler*/
+ INTERRUPT_HANDLER(pit_interrupt, pit_handler);
 
 
 /* system call common interface

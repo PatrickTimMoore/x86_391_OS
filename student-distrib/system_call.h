@@ -25,6 +25,8 @@ typedef struct file_desc{
 typedef struct proc_ctrl_b{
 	int32_t pid0;
 	int32_t pid;
+	uint32_t ebp;
+	uint32_t esp;
 	uint32_t ebp0;
 	uint32_t esp0;
 	file_desc_t file_arr[FILES_NUM];

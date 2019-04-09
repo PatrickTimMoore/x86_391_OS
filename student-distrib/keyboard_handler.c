@@ -511,14 +511,7 @@ int32_t switch_terminal(int new_term){
   memcpy((void*)terms[term_num].vidmem, (void*)VIDEO, FOUR_KB);
   //then we will load the new video memory
   memcpy((void*)VIDEO, (void*)terms[new_term].vidmem, FOUR_KB);
-  //save the old cursor
-  // terms[term_num].curs_x = 5;
-  // terms[term_num].curs_y = 5;
-  //set the new cursor
-  //change the terminal number to new one
-  // printf("                                                   term_num: %d, new_term: %d\n", term_num, new_term );
   term_num = new_term;
-  // printf("                                                  (2) term_num: %d, new_term: %d\n", term_num, new_term );
 
   set_cursor_pos(terms[new_term].curs_x, terms[new_term].curs_y);
   //if there is no process running, we will execute shell

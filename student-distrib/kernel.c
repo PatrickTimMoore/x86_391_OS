@@ -14,6 +14,7 @@
 #include "paging.h"
 #include "filesystem.h"
 #include "system_call.h"
+#include "scheduling.h"
 
 
 #define RUN_TESTS
@@ -169,6 +170,9 @@ void entry(unsigned long magic, unsigned long addr) {
 
     /*init_term*/
     init_term();
+
+    /* init programmable interrupt timer */
+    init_pit();
 
     /* Enable interrupts */
     /* Do not enable the following until after you have set up your

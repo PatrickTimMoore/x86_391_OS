@@ -6,6 +6,7 @@
 #include "keyboard_handler.h"
 #include "rtc_handler.h"
 #include "x86_desc.h"
+#include "scheduling.h"
 
 #define	MAX_BUF_SIZE    200
 #define	FOUR		        4		//Hi peter	
@@ -41,8 +42,8 @@
 
 uint32_t vmem_pt[PT_SIZE] __attribute__((aligned(PAGE_SIZE)));
 
-static int32_t process_bit_map[]={0, 0, 0, 0, 0, 0};
-static int curr_pid = -1;
+int32_t process_bit_map[6]={0, 0, 0, 0, 0, 0};
+// static int (terms[term_num]).act_pid = -1;
 static jump_table_t terminal_jt = {terminal_open, terminal_read, terminal_write, terminal_close};
 static jump_table_t rtc_jt = {rtc_open, rtc_read, rtc_write, rtc_close};
 static jump_table_t dir_jt = {open_dir, read_dir, write_dir, close_dir};
@@ -56,7 +57,7 @@ static jump_table_t file_jt = {open_file, read_file, write_file, close_file};
 *  effects: 
 */
 int32_t halt (uint8_t status){
-  pcb_t* pcb_ptr = (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
+  pcb_t* pcb_ptr = (pcb_t*)(EIGHT_MB - ((terms[term_num]).act_pid + 1)*EIGHT_KB);
   int32_t par_pid = pcb_ptr->pid0;
   int i;
 
@@ -88,9 +89,9 @@ int32_t halt (uint8_t status){
  
   // printf("3\n");
 
-  process_bit_map[curr_pid] = 0;
+  process_bit_map[(terms[term_num]).act_pid] = 0;
   //Set up the 4MB page for our parent process (or depage)
-  curr_pid = par_pid;
+  (terms[term_num]).act_pid = par_pid;
    if(par_pid < 0){
        execute((uint8_t*)"shell");
 
@@ -143,6 +144,7 @@ int32_t execute (const uint8_t* command){
    char test_s[MAX_BUF_SIZE];
    int argbound;
 
+   if(!command){return -1;}
    // printf("Execute!\n");
    /*PARSE THE ARGUMENT*/
    cmdlen = strlen((int8_t*)command);
@@ -275,7 +277,7 @@ int32_t execute (const uint8_t* command){
 	//Set up pcb addressing
 	pcb_ptr = (pcb_t*)(EIGHT_MB - (process_num + 1)*EIGHT_KB);
 
-
+  
 	//Assembly to get ebp0, esp0
   	asm volatile ("   \n\
     	movl %%esp, %%eax \n\
@@ -288,8 +290,8 @@ int32_t execute (const uint8_t* command){
 
     //SET PAGING
     // pcb_ptr->next_idx = 0;
-    pcb_ptr->pid0 = curr_pid;
-    curr_pid = process_num;
+    pcb_ptr->pid0 = (terms[term_num]).act_pid;
+    (terms[term_num]).act_pid = process_num;
     pcb_ptr->pid = process_num;
     for(i = 0; i < argbound; i++){
       (pcb_ptr->argbuf)[i] = test_s[i];
@@ -361,7 +363,7 @@ int32_t read (int32_t fd, void* buf, int32_t nbytes){
     return -1;
   }
  
-  pcb_ptr = (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
+  pcb_ptr = (pcb_t*)(EIGHT_MB - ((terms[term_num]).act_pid + 1)*EIGHT_KB);
  
   if((((pcb_ptr->file_arr)[fd].flags & USED_MASK) == 0) ||
    (((pcb_ptr->file_arr)[fd].flags & READ_MASK) == 0)){
@@ -390,7 +392,7 @@ int32_t write (int32_t fd, const void* buf, int32_t nbytes){
     return -1;
   }
 
-  pcb_ptr = (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
+  pcb_ptr = (pcb_t*)(EIGHT_MB - ((terms[term_num]).act_pid + 1)*EIGHT_KB);
 
   if((((pcb_ptr->file_arr)[fd].flags & USED_MASK) == 0) ||
    (((pcb_ptr->file_arr)[fd].flags & WRITE_MASK) == 0)){
@@ -422,12 +424,12 @@ int32_t open (const uint8_t* filename){
 		return -1;
 	}
 
-  if(curr_pid == -1){
+  if((terms[term_num]).act_pid == -1){
     printf("open: No process running!\n");
     return -1;
   }
 
-  pcb_ptr = (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
+  pcb_ptr = (pcb_t*)(EIGHT_MB - ((terms[term_num]).act_pid + 1)*EIGHT_KB);
 
   for (i = 2; i < FILES_NUM; ++i){
       if(((pcb_ptr->file_arr)[i].flags && USED_MASK) == 0){
@@ -500,7 +502,7 @@ int32_t close (int32_t fd){
     return -1;
   }
 
-  pcb_ptr = (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
+  pcb_ptr = (pcb_t*)(EIGHT_MB - ((terms[term_num]).act_pid + 1)*EIGHT_KB);
 
   if(!((pcb_ptr->file_arr)[fd].flags & USED_MASK)){
     // printf("close: How the fuck will I close something already fucking closed???\n");
@@ -593,7 +595,7 @@ int32_t sigreturn (void){
 *  effects: 
 */
 extern pcb_t* get_curr_pcb(){
-  return (pcb_t*)(EIGHT_MB - (curr_pid + 1)*EIGHT_KB);
+  return (pcb_t*)(EIGHT_MB - ((terms[term_num]).act_pid + 1)*EIGHT_KB);
 }
 
 
@@ -604,7 +606,7 @@ extern pcb_t* get_curr_pcb(){
 *  effects: 
 */
 extern int32_t get_curr_pid(){
-  return curr_pid;
+  return (terms[term_num]).act_pid;
 }
 
 

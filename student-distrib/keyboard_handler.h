@@ -12,8 +12,8 @@ typedef struct term{
 	uint32_t curs_y;
 	uint8_t* vidmem;
 	int32_t act_pid;
-	uint32_t init_;  //Don't judge us
-	uint32_t t_esp;
+	uint32_t init_;  // boolean value, says if initialized or not
+	uint32_t t_esp;  // 
 	uint32_t t_ebp;
 
 }terminal_t;

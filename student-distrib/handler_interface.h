@@ -10,6 +10,9 @@ extern void keyboard_interrupt();
 /* the interface function for rtc*/
 extern void rtc_interrupt();
 
+/* the interface function for pit */
+extern void pit_interrupt();
+
 /*handler for system call*/
 extern void system_call_handler();
 
