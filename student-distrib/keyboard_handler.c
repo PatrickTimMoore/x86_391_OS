@@ -68,6 +68,7 @@
 #define F1                    0x3B
 #define F2                    0x3C
 #define F3                    0x3D
+
 //the size of keyboard buffer
 #define BUFFER_SIZE           127
 #define EOS                   NULL
@@ -75,13 +76,13 @@
 #define FOUR_KB               4096     
 #define PD_ATTRIB             0x7
 #define EMPTY_PT_ENTRY        0x00000002
-#define VIDEO               0xB8000
-#define NUM_COLS            80
-#define NUM_ROWS            25
-#define ATTRIB              0x7
-#define _32_MB              0x2000000
-#define _132_MB             0x8400000
-#define ADDR_BLACKOUT   0xFFFFF000
+#define VIDEO                 0xB8000
+#define NUM_COLS              80
+#define NUM_ROWS              25
+#define ATTRIB                0x7
+#define _32_MB                0x2000000
+#define _132_MB               0x8400000
+#define ADDR_BLACKOUT         0xFFFFF000
 
 
 static int SHIFTKEYACTIVE = 0;
@@ -94,7 +95,7 @@ static int ALTACTIVE = 0;
 //static int terms[term_num].buffer_index = 0;
 
 //flags used for terminal driver
-static int read_flag = 0;
+// static int terms[term_num].entered = 0;
 static int open_flag = 8;
 
 
@@ -235,7 +236,7 @@ void keyboard_handler(){
                 	  }
                 //check if the enter key is hit
                 } else if(scancodeVal == ENTERKEY){
-              		  read_flag = 1; //sets flag for terminal to read the (terms[term_num].keyboard_buffer)
+              		  terms[term_num].entered = 1; //sets flag for terminal to read the (terms[term_num].keyboard_buffer)
                     if(terms[term_num].buffer_index <= BUFFER_SIZE){
                         putc(ENTER); // prints newLine character
                         (terms[term_num].keyboard_buffer)[terms[term_num].buffer_index++]=ENTER;
@@ -272,7 +273,7 @@ void keyboard_handler(){
                 }
             }
             //PSUDO CODE FOR POSSIBLE FUTURE USE
-            //if(read_flag ==1){
+            //if(terms[term_num].entered ==1){
                 //open terminal
                 //read terminal (fd, buf, nbyteslast)
             //}
@@ -344,9 +345,9 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
 		return 0;
 	}
 	//spin to wait the last interrupt ends
-	while(!read_flag);
+	while(!terms[term_num].entered);
 	//clear the read flag
-	read_flag = 0;
+	terms[term_num].entered = 0;
 	//cast the buf into new type
 	uint8_t* buf_uint = (uint8_t*)buf;
 	//loop variabe
@@ -452,6 +453,7 @@ int32_t init_term(){
     terms[i].curs_y = 0;
     terms[i].act_pid = -1;
     terms[i].init_ = 0;
+    terms[i].entered = 0;
     fakemem_pt[i] = (((uint32_t)_32_MB + (i*FOUR_KB)) | PD_ATTRIB);
   }
 
@@ -507,10 +509,18 @@ int32_t switch_terminal(int new_term){
   //check if we try to switch the same terminal
   if(new_term == term_num)
       return 0;
+
+  
+  //The repage
+
+  // vmem_pt[0] = VMEM_P_ENTRY;
+  // page_dir[VIDMAP_IDX] = ((((uint32_t) fakemem_pt & 0xFFFFF000) | PD_ATTRIB));
+   fakemem_pt[term_num] = terms[term_num].vidmem;
   //first we will save the old video memory
   memcpy((void*)terms[term_num].vidmem, (void*)VIDEO, FOUR_KB);
   //then we will load the new video memory
   memcpy((void*)VIDEO, (void*)terms[new_term].vidmem, FOUR_KB);
+  fakmem_pt[new_term] = VIDEO | PD_ATTRIB;
   term_num = new_term;
 
   set_cursor_pos(terms[new_term].curs_x, terms[new_term].curs_y);

@@ -15,6 +15,7 @@ typedef struct term{
 	uint32_t init_;  // boolean value, says if initialized or not
 	uint32_t t_esp;  // 
 	uint32_t t_ebp;
+	int32_t entered;
 
 }terminal_t;
 
@@ -51,6 +52,7 @@ int32_t init_term();
 
 /*execute three shells, one a terminal*/
 int32_t exec_shell_term(int term);
+
 /*switch terminal */
 int32_t switch_terminal(int new_term);
 #endif

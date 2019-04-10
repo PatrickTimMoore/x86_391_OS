@@ -367,7 +367,7 @@ int32_t read (int32_t fd, void* buf, int32_t nbytes){
  
   if((((pcb_ptr->file_arr)[fd].flags & USED_MASK) == 0) ||
    (((pcb_ptr->file_arr)[fd].flags & READ_MASK) == 0)){
-    printf("read: I can't read from this shit go away\n");
+    printf("read (fd:%d): I can't read from this shit go away\n", fd);
     return -1;
   }
   
@@ -558,6 +558,8 @@ int32_t vidmap (uint8_t** screen_start){
   for (i = 0; i < PT_SIZE; ++i){
     vmem_pt[i] = EMPTY_P_ENTRY;
   }
+
+  //The repage
   vmem_pt[0] = VMEM_P_ENTRY;
   page_dir[VIDMAP_IDX] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | PDIR_MASK);
   flush_tlb();

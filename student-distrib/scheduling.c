@@ -85,8 +85,8 @@ int32_t sched_switch(int term_from, int term_to){
     	movl %0, %%esp 	  \n\
     	movl %1, %%ebp    \n\
     	"
-    	:"=a"(pcb_to->esp), "=b"(pcb_to->ebp)
-      	:"r"(pcb_from->esp), "r"(pcb_from->ebp)
+    	:"=a"(pcb_from->esp), "=b"(pcb_from->ebp)
+      	:"r"(pcb_to->esp), "r"(pcb_to->ebp)
     	:"cc"
     );
 
