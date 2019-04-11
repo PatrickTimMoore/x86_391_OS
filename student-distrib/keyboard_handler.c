@@ -515,12 +515,14 @@ int32_t switch_terminal(int new_term){
 
   // vmem_pt[0] = VMEM_P_ENTRY;
   // page_dir[VIDMAP_IDX] = ((((uint32_t) fakemem_pt & 0xFFFFF000) | PD_ATTRIB));
-   fakemem_pt[term_num] = terms[term_num].vidmem;
+  // fakemem_pt[term_num] = terms[term_num].vidmem;
+    
   //first we will save the old video memory
   memcpy((void*)terms[term_num].vidmem, (void*)VIDEO, FOUR_KB);
   //then we will load the new video memory
   memcpy((void*)VIDEO, (void*)terms[new_term].vidmem, FOUR_KB);
-  fakmem_pt[new_term] = VIDEO | PD_ATTRIB;
+
+  // fakemem_pt[new_term] = VIDEO | PD_ATTRIB;
   term_num = new_term;
 
   set_cursor_pos(terms[new_term].curs_x, terms[new_term].curs_y);

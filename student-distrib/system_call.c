@@ -39,6 +39,7 @@
 #define THREE           3
 #define BYTE_SIZE       8
 #define VIDMAP_IDX      33
+#define FOUR_KB         4096
 
 uint32_t vmem_pt[PT_SIZE] __attribute__((aligned(PAGE_SIZE)));
 
@@ -554,16 +555,20 @@ int32_t vidmap (uint8_t** screen_start){
   }
 
   //Choosing 132 MB to load prog into
-  *screen_start = (uint8_t*)ONE_TWENTY_EIGHT_MB + FOUR_MB;
+  // *screen_start = (uint8_t*)ONE_TWENTY_EIGHT_MB + FOUR_MB;
+  *screen_start = (uint8_t*)ONE_TWENTY_EIGHT_MB + FOUR_MB + (term_num*FOUR_KB);
   for (i = 0; i < PT_SIZE; ++i){
     vmem_pt[i] = EMPTY_P_ENTRY;
   }
 
   //The repage
-  vmem_pt[0] = VMEM_P_ENTRY;
+  // vmem_pt[0] = VMEM_P_ENTRY;
+  vmem_pt[term_num] = VMEM_P_ENTRY;
+
   page_dir[VIDMAP_IDX] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | PDIR_MASK);
   flush_tlb();
-	return 0;
+
+	return (int32_t)*screen_start;
 }
 
 
