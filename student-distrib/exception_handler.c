@@ -194,7 +194,17 @@
  * and jumps into while(1) loop
 */
  void exception_handler_14(){
- 	printf("Page-Fault Exception\n");
+  int addr;
+  asm volatile ("   \n\
+      movl %%cr2, %%eax \n\
+      "
+      :"=a"(addr)
+        :
+      :"cc"
+    );
+ 	printf("Page-Fault Exception (0x%x)\n", addr);
+
+
   if(get_curr_pid() == -1){while(1);}
   else{halt(0);}
  }

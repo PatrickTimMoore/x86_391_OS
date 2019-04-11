@@ -15,11 +15,18 @@
 #define DATA_PORT_2		0x42
 #define MODE_CMD_REG	0x43
 
+
+#define FOUR_KB               4096 
+#define _32_MB                0x2000000
+#define ADDR_BLACKOUT         0xFFFFF000
+#define VMEM_PD_ENTRY_MASK    0x00000103
 //Frequency
 #define FREQ_10MS		11931
 
 //Mode 3 (Square Wave Mode)
 #define MODE_3			0x36
+
+uint32_t vmem_pt[PT_SIZE] __attribute__((aligned(PAGE_SIZE)));
 
 void init_pit(){
 	//We can assume our first running terminal is the first terminal
@@ -65,6 +72,14 @@ int32_t sched_switch(int term_from, int term_to){
 	pcb_t* pcb_from;
 	pcb_t* pcb_to;
 
+
+    //remap the video memory to correct place
+     if(run_term != term_num){
+       vmem_pt[184] = (((uint32_t)_32_MB + (run_term*FOUR_KB)) | VMEM_PD_ENTRY_MASK);
+       page_dir[0] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | VMEM_PD_ENTRY_MASK);
+     }  
+
+
 	//Repage to pid_to's program load
 	page_dir[PROC_PD_IDX] = ((EIGHT_MB + (pid_to * FOUR_MB)) & ADDR_BLACKOUT) + PROC_ATT;
 	flush_tlb();
@@ -82,10 +97,20 @@ int32_t sched_switch(int term_from, int term_to){
   	asm volatile ("   \n\
     	movl %%esp, %%eax \n\
     	movl %%ebp, %%ebx \n\
+    	"
+    	:"=a"(pcb_from->esp), "=b"(pcb_from->ebp)
+      	:
+    	:"cc"
+    );
+
+    if(terms[term_to].init_ !=1)
+    	return 0;
+
+    asm volatile ("   \n\
     	movl %0, %%esp 	  \n\
     	movl %1, %%ebp    \n\
     	"
-    	:"=a"(pcb_from->esp), "=b"(pcb_from->ebp)
+    	:
       	:"r"(pcb_to->esp), "r"(pcb_to->ebp)
     	:"cc"
     );

@@ -40,6 +40,7 @@
 #define BYTE_SIZE       8
 #define VIDMAP_IDX      33
 #define FOUR_KB         4096
+#define _32_MB                0x2000000
 
 uint32_t vmem_pt[PT_SIZE] __attribute__((aligned(PAGE_SIZE)));
 
@@ -297,6 +298,9 @@ int32_t execute (const uint8_t* command){
     for(i = 0; i < argbound; i++){
       (pcb_ptr->argbuf)[i] = test_s[i];
     }
+    
+    //change the scheduling terminal when a new process execute
+    run_term = term_num;
 
     //Self null-terminate
     (pcb_ptr->argbuf)[argbound] = '\0';
@@ -556,19 +560,24 @@ int32_t vidmap (uint8_t** screen_start){
 
   //Choosing 132 MB to load prog into
   // *screen_start = (uint8_t*)ONE_TWENTY_EIGHT_MB + FOUR_MB;
-  *screen_start = (uint8_t*)ONE_TWENTY_EIGHT_MB + FOUR_MB + (term_num*FOUR_KB);
+  *screen_start = (uint8_t*)ONE_TWENTY_EIGHT_MB + FOUR_MB ;
   for (i = 0; i < PT_SIZE; ++i){
     vmem_pt[i] = EMPTY_P_ENTRY;
   }
 
   //The repage
-  // vmem_pt[0] = VMEM_P_ENTRY;
-  vmem_pt[term_num] = VMEM_P_ENTRY;
+  if(run_term == term_num){
+      vmem_pt[0] = VMEM_P_ENTRY;
+  }
+  else{
+  	  vmem_pt[0] = (((uint32_t)_32_MB + (run_term*FOUR_KB)) | PDIR_MASK);
+  }
+  //vmem_pt[term_num] = VMEM_P_ENTRY;
 
   page_dir[VIDMAP_IDX] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | PDIR_MASK);
   flush_tlb();
 
-	return (int32_t)*screen_start;
+  return (int32_t)*screen_start;
 }
 
 

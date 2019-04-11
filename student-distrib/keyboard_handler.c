@@ -36,6 +36,7 @@
 #include "i8259.h"
 #include "paging.h"
 #include "system_call.h"
+#include "scheduling.h"
 
 #define IRQ1KEYBOARD          0x01
 #define KEYBOARDDATAPORT      0x60
@@ -491,8 +492,11 @@ int32_t exec_shell_term(int term){
  ** This function write nbytes bytes from the keyboard buffer to the screen.
 */
 int32_t switch_terminal(int new_term){
+
   int i = 0;
   int flag = 0;
+  pcb_t* pcb_from;
+
   for(i = 0; i < 6; i++){
     if(!process_bit_map[i]){
       flag = 1;
@@ -516,21 +520,36 @@ int32_t switch_terminal(int new_term){
   // vmem_pt[0] = VMEM_P_ENTRY;
   // page_dir[VIDMAP_IDX] = ((((uint32_t) fakemem_pt & 0xFFFFF000) | PD_ATTRIB));
   // fakemem_pt[term_num] = terms[term_num].vidmem;
-    
+    cli();
   //first we will save the old video memory
   memcpy((void*)terms[term_num].vidmem, (void*)VIDEO, FOUR_KB);
   //then we will load the new video memory
   memcpy((void*)VIDEO, (void*)terms[new_term].vidmem, FOUR_KB);
 
   // fakemem_pt[new_term] = VIDEO | PD_ATTRIB;
-  term_num = new_term;
+
 
   set_cursor_pos(terms[new_term].curs_x, terms[new_term].curs_y);
   //if there is no process running, we will execute shell
+
+  //Get relative PCBs in memory
+  pcb_from = get_pcb(terms[term_num].act_pid);
+
+  term_num = new_term;
+
   if(!terms[new_term].init_){
+      asm volatile ("   \n\
+      movl %%esp, %%eax \n\
+      movl %%ebp, %%ebx \n\
+      "
+      :"=a"(pcb_from->esp), "=b"(pcb_from->ebp)
+      :
+      :"cc"
+    );
+    run_term = new_term;
     terms[new_term].init_ = 1;
     exec_shell_term(new_term);
   }
-
+  sti();
   return 0;
 } 
