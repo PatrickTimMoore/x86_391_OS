@@ -39,7 +39,7 @@ int32_t run_term;
 
 void init_pit();
 void pit_handler();
-int32_t schedule();
-int32_t sched_switch(int term_from, int term_to);
+// void schedule();
+void sched_switch(int term_from, int term_to);
 
 #endif

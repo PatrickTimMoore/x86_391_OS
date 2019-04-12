@@ -59,52 +59,71 @@ void pit_handler(){
 
 	// context switch between curr run_term and next term, then update run_term
 	sched_switch(run_term, next_term);
-	run_term = next_term;
-
-	//Unmask because we came in with and interrupt gate
 	sti();
 }
 
 
-int32_t sched_switch(int term_from, int term_to){
+void sched_switch(int term_from, int term_to){
 	int pid_from = terms[term_from].act_pid;
 	int pid_to = terms[term_to].act_pid;
 	pcb_t* pcb_from;
 	pcb_t* pcb_to;
 
+	if(term_from < 0 || term_to < 0 || terms[term_from].act_pid < 0 || terms[term_to].act_pid < 0 ){
+		// printf("Something's not right; term_from: %d, term_to: %d, act_pid_from: %d, act_pid_to: %d\n", term_from, term_to, terms[term_from].act_pid, terms[term_to].act_, );
+		// return -1;
+		return;
+	}
 
+	printf("Switch from term %d (process %d) to term %d (process %d); run_term is currently %d\n", term_from, terms[term_from].act_pid, term_to, terms[term_to].act_pid, run_term);
     // //remap the video memory to correct place
-    if(run_term != term_num){
-        vmem_pt[184] = (((uint32_t)_32_MB + (run_term*FOUR_KB)) | VMEM_PD_ENTRY_MASK);
-        page_dir[0] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | VMEM_PD_ENTRY_MASK);
-    }  
+    // if(run_term != term_num){
+    //     vmem_pt[184] = (((uint32_t)_32_MB + (run_term*FOUR_KB)) | VMEM_PD_ENTRY_MASK);
+    //     page_dir[0] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | VMEM_PD_ENTRY_MASK);
+    // }  
 
+	printf("B\n");
+
+	//Switch the run_term before we fuck with absolutely everything
+    run_term = term_to;
 
 	//Repage to pid_to's program load
 	page_dir[PROC_PD_IDX] = ((EIGHT_MB + (pid_to * FOUR_MB)) & ADDR_BLACKOUT) + PROC_ATT;
 	flush_tlb();
+	printf("C\n");
 
 	//Get relative PCBs in memory
 	pcb_from = get_pcb(pid_from);
 	pcb_to = get_pcb(pid_to);
+	printf("D\n");
 
 	//Update the TSS
   	tss.esp0 = EIGHT_MB - (EIGHT_KB*pid_to) - FOUR;
   	tss.ss0 = KERNEL_DS;
 
+	printf("E\n");
+
   	//Save esp, ebp
 	//Assembly to get ebp0, esp0
   	asm volatile ("   \n\
-    	movl %%esp, %%eax \n\
-    	movl %%ebp, %%ebx \n\
+    	movl %%esp, %0 \n\
+    	movl %%ebp, %1 \n\
     	"
-    	:"=a"(pcb_from->esp), "=b"(pcb_from->ebp)
+    	:"=r"(pcb_from->esp), "=r"(pcb_from->ebp)
       	:
     	:"cc"
     );
+	printf("F\n");
 
-    if(terms[term_to].init_ !=1)
-    	return 0;
+    if(!terms[term_to].init_){
+    	// return -1;
+    	return;
+    }
+
+	printf("G\n");
+
+	printf("from esp: %d, from ebp: %d\n", pcb_from->esp, pcb_from->ebp);	
+	printf("to esp: %d, to ebp: %d\n", pcb_to->esp, pcb_to->ebp);	
 
     asm volatile ("   \n\
     	movl %0, %%esp 	  \n\
@@ -113,7 +132,8 @@ int32_t sched_switch(int term_from, int term_to){
     	:
       	:"r"(pcb_to->esp), "r"(pcb_to->ebp)
     	:"cc"
-    );
-
-    return 0;
+    );	
+	printf("HA\n");
+	sti();
+	// return 6;
 }
