@@ -73,11 +73,11 @@ int32_t sched_switch(int term_from, int term_to){
 	pcb_t* pcb_to;
 
 
-    //remap the video memory to correct place
-     if(run_term != term_num){
-       vmem_pt[184] = (((uint32_t)_32_MB + (run_term*FOUR_KB)) | VMEM_PD_ENTRY_MASK);
-       page_dir[0] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | VMEM_PD_ENTRY_MASK);
-     }  
+    // //remap the video memory to correct place
+    //  if(run_term != term_num){
+    //    vmem_pt[184] = (((uint32_t)_32_MB + (run_term*FOUR_KB)) | VMEM_PD_ENTRY_MASK);
+    //    page_dir[0] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | VMEM_PD_ENTRY_MASK);
+    //  }  
 
 
 	//Repage to pid_to's program load
@@ -89,7 +89,7 @@ int32_t sched_switch(int term_from, int term_to){
 	pcb_to = get_pcb(pid_to);
 
 	//Update the TSS
-  	tss.esp0 = EIGHT_MB - (EIGHT_KB*pid_from) - FOUR;
+  	tss.esp0 = EIGHT_MB - (EIGHT_KB*pid_to) - FOUR;
   	tss.ss0 = KERNEL_DS;
 
   	//Save esp, ebp

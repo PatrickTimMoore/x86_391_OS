@@ -520,7 +520,7 @@ int32_t switch_terminal(int new_term){
   // vmem_pt[0] = VMEM_P_ENTRY;
   // page_dir[VIDMAP_IDX] = ((((uint32_t) fakemem_pt & 0xFFFFF000) | PD_ATTRIB));
   // fakemem_pt[term_num] = terms[term_num].vidmem;
-    cli();
+  //cli();
   //first we will save the old video memory
   memcpy((void*)terms[term_num].vidmem, (void*)VIDEO, FOUR_KB);
   //then we will load the new video memory
@@ -550,6 +550,6 @@ int32_t switch_terminal(int new_term){
     terms[new_term].init_ = 1;
     exec_shell_term(new_term);
   }
-  sti();
+  //sti();
   return 0;
 } 

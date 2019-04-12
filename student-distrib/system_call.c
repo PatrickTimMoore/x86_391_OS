@@ -59,7 +59,7 @@ static jump_table_t file_jt = {open_file, read_file, write_file, close_file};
 *  effects: 
 */
 int32_t halt (uint8_t status){
-  pcb_t* pcb_ptr = (pcb_t*)(EIGHT_MB - ((terms[term_num]).act_pid + 1)*EIGHT_KB);
+  pcb_t* pcb_ptr = (pcb_t*)(EIGHT_MB - ((terms[run_term]).act_pid + 1)*EIGHT_KB);
   int32_t par_pid = pcb_ptr->pid0;
   int i;
 
@@ -91,9 +91,9 @@ int32_t halt (uint8_t status){
  
   // printf("3\n");
 
-  process_bit_map[(terms[term_num]).act_pid] = 0;
+  process_bit_map[(terms[run_term]).act_pid] = 0;
   //Set up the 4MB page for our parent process (or depage)
-  (terms[term_num]).act_pid = par_pid;
+  (terms[run_term]).act_pid = par_pid;
    if(par_pid < 0){
        execute((uint8_t*)"shell");
 
@@ -368,7 +368,7 @@ int32_t read (int32_t fd, void* buf, int32_t nbytes){
     return -1;
   }
  
-  pcb_ptr = (pcb_t*)(EIGHT_MB - ((terms[term_num]).act_pid + 1)*EIGHT_KB);
+  pcb_ptr = (pcb_t*)(EIGHT_MB - ((terms[run_term]).act_pid + 1)*EIGHT_KB);
  
   if((((pcb_ptr->file_arr)[fd].flags & USED_MASK) == 0) ||
    (((pcb_ptr->file_arr)[fd].flags & READ_MASK) == 0)){
@@ -397,7 +397,7 @@ int32_t write (int32_t fd, const void* buf, int32_t nbytes){
     return -1;
   }
 
-  pcb_ptr = (pcb_t*)(EIGHT_MB - ((terms[term_num]).act_pid + 1)*EIGHT_KB);
+  pcb_ptr = (pcb_t*)(EIGHT_MB - ((terms[run_term]).act_pid + 1)*EIGHT_KB);
 
   if((((pcb_ptr->file_arr)[fd].flags & USED_MASK) == 0) ||
    (((pcb_ptr->file_arr)[fd].flags & WRITE_MASK) == 0)){
@@ -434,7 +434,7 @@ int32_t open (const uint8_t* filename){
     return -1;
   }
 
-  pcb_ptr = (pcb_t*)(EIGHT_MB - ((terms[term_num]).act_pid + 1)*EIGHT_KB);
+  pcb_ptr = (pcb_t*)(EIGHT_MB - ((terms[run_term]).act_pid + 1)*EIGHT_KB);
 
   for (i = 2; i < FILES_NUM; ++i){
       if(((pcb_ptr->file_arr)[i].flags && USED_MASK) == 0){
@@ -507,7 +507,7 @@ int32_t close (int32_t fd){
     return -1;
   }
 
-  pcb_ptr = (pcb_t*)(EIGHT_MB - ((terms[term_num]).act_pid + 1)*EIGHT_KB);
+  pcb_ptr = (pcb_t*)(EIGHT_MB - ((terms[run_term]).act_pid + 1)*EIGHT_KB);
 
   if(!((pcb_ptr->file_arr)[fd].flags & USED_MASK)){
     // printf("close: How the fuck will I close something already fucking closed???\n");
@@ -560,7 +560,7 @@ int32_t vidmap (uint8_t** screen_start){
 
   //Choosing 132 MB to load prog into
   // *screen_start = (uint8_t*)ONE_TWENTY_EIGHT_MB + FOUR_MB;
-  *screen_start = (uint8_t*)ONE_TWENTY_EIGHT_MB + FOUR_MB ;
+  *screen_start = (uint8_t*)ONE_TWENTY_EIGHT_MB + FOUR_MB+ FOUR_MB ;
   for (i = 0; i < PT_SIZE; ++i){
     vmem_pt[i] = EMPTY_P_ENTRY;
   }
@@ -574,7 +574,7 @@ int32_t vidmap (uint8_t** screen_start){
   }
   //vmem_pt[term_num] = VMEM_P_ENTRY;
 
-  page_dir[VIDMAP_IDX] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | PDIR_MASK);
+  page_dir[VIDMAP_IDX+1] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | PDIR_MASK);
   flush_tlb();
 
   return (int32_t)*screen_start;
