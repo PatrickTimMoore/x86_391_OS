@@ -36,8 +36,8 @@ void init_pit(){
 	outb(MODE_3, MODE_CMD_REG);
 
 	//Set frequency to 1 tick every 10ms; need to send with 2 outbs
-	outb((FREQ_10MS) & 0xff, MODE_CMD_REG);
-	outb((FREQ_10MS >> 8) & 0xff, MODE_CMD_REG);
+	outb((FREQ_10MS) & 0xff, DATA_PORT_0);
+	outb((FREQ_10MS >> 8) & 0xff, DATA_PORT_0);
 
 	//Enable the irq line
 	enable_irq(PIT_IRQ_LINE);
@@ -74,10 +74,10 @@ int32_t sched_switch(int term_from, int term_to){
 
 
     // //remap the video memory to correct place
-    //  if(run_term != term_num){
-    //    vmem_pt[184] = (((uint32_t)_32_MB + (run_term*FOUR_KB)) | VMEM_PD_ENTRY_MASK);
-    //    page_dir[0] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | VMEM_PD_ENTRY_MASK);
-    //  }  
+    if(run_term != term_num){
+        vmem_pt[184] = (((uint32_t)_32_MB + (run_term*FOUR_KB)) | VMEM_PD_ENTRY_MASK);
+        page_dir[0] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | VMEM_PD_ENTRY_MASK);
+    }  
 
 
 	//Repage to pid_to's program load
