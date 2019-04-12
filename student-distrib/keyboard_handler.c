@@ -546,6 +546,8 @@ printf("Switching terminals..\n");
   term_num = new_term;
 
   if(!terms[new_term].init_){
+      run_term = new_term;
+      terms[new_term].init_ = 1;
       asm volatile ("   \n\
       movl %%esp, %%eax \n\
       movl %%ebp, %%ebx \n\
@@ -554,8 +556,7 @@ printf("Switching terminals..\n");
       :
       :"cc"
     );
-    run_term = new_term;
-    terms[new_term].init_ = 1;
+
     exec_shell_term(new_term);
   }
   //sti();

@@ -133,7 +133,7 @@ void sched_switch(int term_from, int term_to){
       	:"r"(pcb_to->esp), "r"(pcb_to->ebp)
     	:"cc"
     );	
-	printf("HA\n");
-	sti();
-	// return 6;
+	//printf("HA\n");
+	//sti();
+    return;
 }
