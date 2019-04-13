@@ -97,7 +97,7 @@ void sched_switch(int term_from, int term_to){
     		movl %%esp, %0 \n\
     		movl %%ebp, %1 \n\
     		"
-    		:"=r"(terms[term_from].t_esp), "=r"(terms[term_to].t_ebp)
+    		:"=r"(terms[term_from].t_esp), "=r"(terms[term_from].t_ebp)
       		:
     		:"cc"
     	);
@@ -123,7 +123,7 @@ void sched_switch(int term_from, int term_to){
     		movl %%esp, %0 \n\
     		movl %%ebp, %1 \n\
     		"
-    		:"=r"(terms[term_from].t_esp), "=r"(terms[term_to].t_ebp)
+    		:"=r"(terms[term_from].t_esp), "=r"(terms[term_from].t_ebp)
       		:
     		:"cc"
     	);

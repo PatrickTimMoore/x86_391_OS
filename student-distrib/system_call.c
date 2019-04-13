@@ -298,6 +298,7 @@ int32_t execute (const uint8_t* command){
     pcb_ptr->pid0 = (terms[run_term]).act_pid;
     (terms[run_term]).act_pid = process_num;
     pcb_ptr->pid = process_num;
+
     for(i = 0; i < argbound; i++){
       (pcb_ptr->argbuf)[i] = test_s[i];
     }

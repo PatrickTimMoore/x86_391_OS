@@ -410,6 +410,7 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
 int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
   // printf("Terminal write!\n");
      //check if the terminal driver is open or not
+    cli();
     if(open_flag >= 8){
     	return 0;
     }
@@ -434,6 +435,7 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
     }
 		
 		bytes_written++;
+    sti();
 	}
   loop=0;
   // while((terms[run_term].keyboard_buffer)[loop] != NULL){
@@ -544,12 +546,13 @@ int32_t switch_terminal(int new_term){
 
   // fakemem_pt[new_term] = VIDEO | PD_ATTRIB;
 
+  term_num = new_term;
   //restore cursor pos
   set_cursor_pos(terms[new_term].curs_x, terms[new_term].curs_y);
   //Get relative PCBs in memory
   pcb_from = get_pcb(terms[term_num].act_pid);
   // printf("pcb_froms esp: %d, ebp: %d\n", pcb_from->esp, pcb_from->ebp );
-  term_num = new_term;
+  
 
   //If the terminal we switch to is not initialized, schedule it to execute on next PIT interrupts
   if(!terms[new_term].init_){
