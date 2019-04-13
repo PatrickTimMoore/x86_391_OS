@@ -453,6 +453,7 @@ int32_t init_term(){
   for (j = 0; j < PT_SIZE; ++j){
     fakemem_pt[j] = EMPTY_PT_ENTRY;
   }
+
   for(i = 0; i < 3; i++){
     terms[i].buffer_index = 0;
     terms[i].keyboard_buffer[0] = '\0';
@@ -464,6 +465,7 @@ int32_t init_term(){
     fakemem_pt[i] = (((uint32_t)_32_MB + (i*FOUR_KB)) | PD_ATTRIB);
     sched_to_exec[i] = 0;
   }
+
   sched_to_exec[0] = 1;
   page_dir[33] = (((uint32_t)fakemem_pt & 0xFFFFF000) | PD_ATTRIB);
   flush_tlb();
@@ -545,8 +547,9 @@ int32_t switch_terminal(int new_term){
 
   //If the terminal we switch to is not initialized, schedule it to execute on next PIT interrupts
   if(!terms[new_term].init_){
-      //KEYBOARD HANDLER DOES NO PROCESS SWITCHING; Simply schedules terminal to start first time
+      //KEYBOARD HANDLER DOES NO PROCESS SWITCHING; Simply schedules terminal to start the first time
       sched_to_exec[new_term] = 1;
+
       // run_term = new_term;
       // terms[new_term].init_ = 1;
       //   asm volatile ("   \n\

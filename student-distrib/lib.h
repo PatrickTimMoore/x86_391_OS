@@ -37,6 +37,9 @@ void backspace_helper();
 
 
 
+// char* video_mem_custom;
+
+
 
 /* Port read functions */
 /* Inb reads a byte and returns its value as a zero-extended 32-bit

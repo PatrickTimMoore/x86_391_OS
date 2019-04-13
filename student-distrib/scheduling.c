@@ -115,6 +115,7 @@ void sched_switch(int term_from, int term_to){
     	return;
 	}
 	else{ //if(terms[term_to].init_){
+		// printf("Switch from term %d (process %d) to term %d (process %d); run_term is currently %d\n", term_from, terms[term_from].act_pid, term_to, terms[term_to].act_pid, run_term);
 
   		//Save esp, ebp
 		//Assembly to get ebp0, esp0
