@@ -7,6 +7,7 @@
 
 #include "types.h"
 #include "keyboard_handler.h"
+#include "scheduling.h"
 
 int32_t printf(int8_t *format, ...);
 void putc(uint8_t c);
@@ -34,10 +35,10 @@ void test_interrupts(void);
 void set_cursor_pos(int32_t x, int32_t y);
 void scroll_screen_up();
 void backspace_helper();
+void set_cursor_pos_sched(int32_t x, int32_t y);
+void scroll_screen_up_sched();
+void putc_sched(uint8_t c);
 
-
-
-// char* video_mem_custom;
 
 
 

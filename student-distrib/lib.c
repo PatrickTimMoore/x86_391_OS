@@ -15,8 +15,7 @@
 #define HIGH_MASK           0xFF00
 
 
-static int screen_x;
-static int screen_y;
+
 static char* video_mem = (char *)VIDEO;
 
 /* void clear(void);
@@ -32,7 +31,7 @@ void clear(void) {
     //set the cursur to (0, 0)
     terms[term_num].curs_x=0; 
     terms[term_num].curs_y=0;
-    set_cursor_pos(0, 0);
+    set_cursor_pos(terms[term_num].curs_x, terms[term_num].curs_y);
 }
 
 /* Standard printf().
@@ -181,16 +180,34 @@ int32_t puts(int8_t* s) {
 void putc(uint8_t c) {
     if(c == '\n' || c == '\r') {
         //change to a new line
-        terms[term_num].curs_y++;
-        set_cursor_pos(0, terms[term_num].curs_y);
+        set_cursor_pos(0, terms[term_num].curs_y+1);
     } else {
         *(uint8_t *)(video_mem + ((NUM_COLS * terms[term_num].curs_y + terms[term_num].curs_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS * terms[term_num].curs_y + terms[term_num].curs_x) << 1) + 1) = ATTRIB;
         //set the new cursor
-        terms[term_num].curs_x++;
-        set_cursor_pos(terms[term_num].curs_x, terms[term_num].curs_y);
+        set_cursor_pos(terms[term_num].curs_x+1, terms[term_num].curs_y);
     }
 }
+
+
+
+/* void putc(uint8_t c);
+ * Inputs: uint_8* c = character to print
+ * Return Value: void
+ *  Function: Output a character to the console */
+void putc_sched(uint8_t c) {
+    if(c == '\n' || c == '\r') {
+        //change to a new line
+        set_cursor_pos_sched(0, terms[run_term].curs_y+1);
+    } else {
+        *(uint8_t *)(terms[run_term].vidmem + ((NUM_COLS * terms[run_term].curs_y + terms[run_term].curs_x) << 1)) = c;
+        *(uint8_t *)(terms[run_term].vidmem + ((NUM_COLS * terms[run_term].curs_y + terms[run_term].curs_x) << 1) + 1) = ATTRIB;
+        //set the new cursor
+        set_cursor_pos_sched(terms[run_term].curs_x+1, terms[run_term].curs_y);
+    }
+}
+
+
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);
  * Inputs: uint32_t value = number to convert
@@ -513,7 +530,29 @@ void scroll_screen_up(){
 
 }
 
+/*
+* void scroll_screen_up_sched()
+*   Inputs: void
+*   Return Value: void
+*   Function: scroll the screen up by one line to get a new 
+*   empty line available
+*/
 
+void scroll_screen_up_sched(){
+    //looping variable
+    int32_t loop;
+    //shift the old screen up by one
+    for(loop=0; loop< (NUM_ROWS - 1) * NUM_COLS; loop++){
+        //copy the old line into the new line
+        *(uint8_t *)(terms[run_term].vidmem + (loop << 1)) = *(uint8_t *)(terms[run_term].vidmem + ((loop+NUM_COLS) << 1)) ;
+    }
+    //empty the new last line
+    for(loop=0; loop<NUM_COLS; loop++){
+        //set each char at last line to ' '
+        *(uint8_t *)(terms[run_term].vidmem + ((NUM_COLS*(NUM_ROWS-1)+loop) << 1)) = ' ';
+    }
+
+}
 
 
 /*
@@ -560,6 +599,36 @@ void set_cursor_pos(int32_t x, int32_t y)
 
 
 /*
+* void set_cursor_pos_sched(int x, int y)
+*   Inputs: x, y are the position to be set to
+*   Return Value: void
+*   Function: set the cursor to position (x, y)
+*/
+void set_cursor_pos_sched(int32_t x, int32_t y)
+ {
+    //set the new terms[term_num].curs_x and terms[term_num].curs_y
+    terms[run_term].curs_x = x;
+    terms[run_term].curs_y = y;
+    //check if the x and y is less than 0
+    if( (terms[run_term].curs_x < 0) || (terms[run_term].curs_y < 0) ){
+        return;
+    }
+    //check if we need to change to a new line
+    if(terms[run_term].curs_x >=NUM_COLS){
+        terms[run_term].curs_x=0;
+        terms[run_term].curs_y++;
+    }
+    //check if the y is out of bound
+    if( terms[run_term].curs_y >= NUM_ROWS ){
+        //scroll up the screen
+        scroll_screen_up_sched();
+        terms[run_term].curs_x=0;
+        terms[run_term].curs_y=NUM_ROWS-1;
+    }
+
+}
+
+/*
 * void backspace_helper()
 *   Inputs: void
 *   Return Value: void
@@ -573,12 +642,10 @@ void backspace_helper(){
     }
     //check if we are at the start of a line
     if(terms[term_num].curs_x == 0){
-        terms[term_num].curs_y--;
-        set_cursor_pos(NUM_COLS-1, terms[term_num].curs_y);
+        set_cursor_pos(NUM_COLS-1, terms[term_num].curs_y-1);
     }
     else{
-        terms[term_num].curs_x--;
-        set_cursor_pos(terms[term_num].curs_x, terms[term_num].curs_y);
+        set_cursor_pos(terms[term_num].curs_x-1, terms[term_num].curs_y);
     }
 
     //delete the old char

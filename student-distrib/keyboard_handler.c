@@ -426,22 +426,28 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
 		if(buf_uint[loop] == NULL){
 			break;
 		}
-		putc(buf_uint[loop]);
+    if(term_num == run_term){
+      putc(buf_uint[loop]);
+    }
+    else{
+      putc_sched(buf_uint[loop]);
+    }
+		
 		bytes_written++;
 	}
   loop=0;
-  while((terms[term_num].keyboard_buffer)[loop] != NULL){
-      if((terms[term_num].keyboard_buffer)[loop] == '\n'){
-          putc((terms[term_num].keyboard_buffer)[loop++]);
-          uint8_t bufNew[200];
-          terminal_open(0);
-          terminal_read(0, bufNew, 200);
-          bytes_written += terminal_write(0, bufNew, 200);
-          terminal_close(0);
-          break;
-      }
-      putc((terms[term_num].keyboard_buffer)[loop++]);
-  }
+  // while((terms[run_term].keyboard_buffer)[loop] != NULL){
+  //     if((terms[run_term].keyboard_buffer)[loop] == '\n'){
+  //         putc((terms[run_term].keyboard_buffer)[loop++]);
+  //         uint8_t bufNew[200];
+  //         terminal_open(0);
+  //         terminal_read(0, bufNew, 200);
+  //         bytes_written += terminal_write(0, bufNew, 200);
+  //         terminal_close(0);
+  //         break;
+  //     }
+  //     putc((terms[run_term].keyboard_buffer)[loop++]);
+  // }
 
   // printf("Terminal write end\n");
 	return bytes_written;
