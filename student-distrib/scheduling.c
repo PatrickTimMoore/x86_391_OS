@@ -101,17 +101,11 @@ void sched_switch(int term_from, int term_to){
       		:
     		:"cc"
     	);
-
 //TO CHECK: Does calling execute just redo these? Like, do we need to redo these in execute case?
-
-
     	//Change running process for system calls
     	run_term = term_to;
-
-    	printf("Booting up new shell\n");
     	//Start the new terminal
     	exec_shell_term(term_to);
-    	// execute((uint8_t*)"shell");
     	return;
 	}
 	else{ //if(terms[term_to].init_){
@@ -154,59 +148,4 @@ void sched_switch(int term_from, int term_to){
     	);	
     	return;
 	}
-
-	//else{return;}
-
-	// printf("B\n");
-
-	// //Switch the run_term before we fuck with absolutely everything
- //    run_term = term_to;
-
-
-	// printf("C\n");
-
-	// //Get relative PCBs in memory
-	// pcb_from = get_pcb(pid_from);
-	// pcb_to = get_pcb(pid_to);
-	// printf("D\n");
-
-	// //Update the TSS
- //  	tss.esp0 = EIGHT_MB - (EIGHT_KB*pid_to) - FOUR;
- //  	tss.ss0 = KERNEL_DS;
-
-	// printf("E\n");
-
- //  	//Save esp, ebp
-	// //Assembly to get ebp0, esp0
- //  	asm volatile ("   \n\
- //    	movl %%esp, %0 \n\
- //    	movl %%ebp, %1 \n\
- //    	"
- //    	:"=r"(pcb_from->esp), "=r"(pcb_from->ebp)
- //      	:
- //    	:"cc"
- //    );
-	// printf("F\n");
-
- //    if(!terms[term_to].init_){
- //    	// return -1;
- //    	return;
- //    }
-
-	// printf("G\n");
-
-	// printf("from esp: %d, from ebp: %d\n", pcb_from->esp, pcb_from->ebp);	
-	// printf("to esp: %d, to ebp: %d\n", pcb_to->esp, pcb_to->ebp);	
-
- //    asm volatile ("   \n\
- //    	movl %0, %%esp 	  \n\
- //    	movl %1, %%ebp    \n\
- //    	"
- //    	:
- //      	:"r"(pcb_to->esp), "r"(pcb_to->ebp)
- //    	:"cc"
- //    );	
-	// //printf("HA\n");
-	// //sti();
- //    return;
 }

@@ -531,7 +531,7 @@ int32_t switch_terminal(int new_term){
   if(new_term == term_num)
       return 0;
 
-  printf("Switching terminals..\n");
+  // printf("Switching terminals..\n");
   //The repage
 
   // vmem_pt[0] = VMEM_P_ENTRY;

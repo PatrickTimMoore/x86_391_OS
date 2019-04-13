@@ -35,7 +35,7 @@
 #define BYTE_SIZE       	8
 #define VIDMAP_IDX      	33
 
-int32_t run_term;
+volatile int32_t run_term;
 
 void init_pit();
 void pit_handler();

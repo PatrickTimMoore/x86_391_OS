@@ -136,7 +136,17 @@ int32_t halt (uint8_t status){
 *  effects: 
 */
 int32_t execute (const uint8_t* command){
-   cli();
+  
+  //JANK
+  sti();
+  while(run_term != term_num);
+  cli();
+
+   //If we're off just drop the request
+   // if(run_term != term_num){
+      // return;
+   // }
+
    int i, cmdstart, cmdend, cmdlen, byt, offset;
    dentry_t d;
    uint8_t cmd_buf[MAX_BUF_SIZE];
@@ -201,7 +211,7 @@ int32_t execute (const uint8_t* command){
    // read_file(0, buf, FOUR);
    // printf("Reading dentry by name\n");
    if(read_dentry_by_name(cmd_buf, &d) == -1){
-    printf("Executable \"%s\" not found.\n", cmd_buf);
+    printf("Executable \"%s\" not found; run_term: %d.\n", cmd_buf, run_term);
     return -1;
    }
    // printf("Reading first 4 bytes\n");

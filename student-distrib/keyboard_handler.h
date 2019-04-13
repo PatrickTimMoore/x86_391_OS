@@ -27,7 +27,7 @@ typedef struct term{
 
 // uint32_t fakemem_pt[PT_SIZE] __attribute__((aligned(PAGE_SIZE)));
 
-uint32_t term_num;
+volatile uint32_t term_num;
 terminal_t terms[NUM_TERM];
 int32_t sched_to_exec[NUM_TERM];
 
