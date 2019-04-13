@@ -136,6 +136,7 @@ int32_t halt (uint8_t status){
 *  effects: 
 */
 int32_t execute (const uint8_t* command){
+   cli();
    int i, cmdstart, cmdend, cmdlen, byt, offset;
    dentry_t d;
    uint8_t cmd_buf[MAX_BUF_SIZE];
@@ -200,7 +201,7 @@ int32_t execute (const uint8_t* command){
    // read_file(0, buf, FOUR);
    // printf("Reading dentry by name\n");
    if(read_dentry_by_name(cmd_buf, &d) == -1){
-    // printf("Executable not found.\n");
+    printf("Executable \"%s\" not found.\n", cmd_buf);
     return -1;
    }
    // printf("Reading first 4 bytes\n");
@@ -292,15 +293,17 @@ int32_t execute (const uint8_t* command){
 
     //SET PAGING
     // pcb_ptr->next_idx = 0;
-    pcb_ptr->pid0 = (terms[term_num]).act_pid;
-    (terms[term_num]).act_pid = process_num;
+    // pcb_ptr->pid0 = (terms[term_num]).act_pid;
+    // (terms[term_num]).act_pid = process_num;
+    pcb_ptr->pid0 = (terms[run_term]).act_pid;
+    (terms[run_term]).act_pid = process_num;
     pcb_ptr->pid = process_num;
     for(i = 0; i < argbound; i++){
       (pcb_ptr->argbuf)[i] = test_s[i];
     }
     
     //change the scheduling terminal when a new process execute
-    run_term = term_num;
+    // run_term = term_num;
 
     //Self null-terminate
     (pcb_ptr->argbuf)[argbound] = '\0';
@@ -346,9 +349,7 @@ int32_t execute (const uint8_t* command){
       :"cc"
     );
 
-
-
-
+    sti();
    	return 0;
 }
 
@@ -429,7 +430,8 @@ int32_t open (const uint8_t* filename){
 		return -1;
 	}
 
-  if((terms[term_num]).act_pid == -1){
+  // if((terms[term_num]).act_pid == -1){
+  if((terms[run_term]).act_pid == -1){
     printf("open: No process running!\n");
     return -1;
   }
@@ -553,14 +555,16 @@ int32_t getargs (uint8_t* buf, int32_t nbytes){
 */
 int32_t vidmap (uint8_t** screen_start){
   int i;
+
   // uint8_t* giv_addr = *screen_start;
   if((uint32_t)screen_start < ONE_TWENTY_EIGHT_MB || (uint32_t)screen_start >= ONE_TWENTY_EIGHT_MB + FOUR_MB){
+    printf("Yo wtf this pointer bogus boi\n");
     return -1;
   }
 
   //Choosing 132 MB to load prog into
   // *screen_start = (uint8_t*)ONE_TWENTY_EIGHT_MB + FOUR_MB;
-  *screen_start = (uint8_t*)ONE_TWENTY_EIGHT_MB + FOUR_MB+ FOUR_MB ;
+  *screen_start = (uint8_t*)ONE_TWENTY_EIGHT_MB + FOUR_MB + FOUR_MB ;
   for (i = 0; i < PT_SIZE; ++i){
     vmem_pt[i] = EMPTY_P_ENTRY;
   }
@@ -572,6 +576,7 @@ int32_t vidmap (uint8_t** screen_start){
   else{
   	  vmem_pt[0] = (((uint32_t)_32_MB + (run_term*FOUR_KB)) | PDIR_MASK);
   }
+
   //vmem_pt[term_num] = VMEM_P_ENTRY;
 
   page_dir[VIDMAP_IDX+1] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | PDIR_MASK);
@@ -611,7 +616,8 @@ int32_t sigreturn (void){
 *  effects: 
 */
 extern pcb_t* get_curr_pcb(){
-  return (pcb_t*)(EIGHT_MB - ((terms[term_num]).act_pid + 1)*EIGHT_KB);
+  // return (pcb_t*)(EIGHT_MB - ((terms[term_num]).act_pid + 1)*EIGHT_KB);
+  return (pcb_t*)(EIGHT_MB - ((terms[run_term]).act_pid + 1)*EIGHT_KB);
 }
 
 
@@ -622,7 +628,8 @@ extern pcb_t* get_curr_pcb(){
 *  effects: 
 */
 extern int32_t get_curr_pid(){
-  return (terms[term_num]).act_pid;
+  // return (terms[term_num]).act_pid;
+  return (terms[run_term]).act_pid;
 }
 
 
