@@ -34,6 +34,7 @@
 #define THREE           	3
 #define BYTE_SIZE       	8
 #define VIDMAP_IDX      	33
+#define VMEM_OLD_PTR        VIDMAP_IDX + 1
 
 volatile int32_t run_term;
 
