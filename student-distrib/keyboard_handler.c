@@ -102,7 +102,7 @@ static int open_flag = 8;
 
 
 uint32_t fakemem_pt[PT_SIZE] __attribute__((aligned(PAGE_SIZE)));
-
+uint32_t vmem_pt[PT_SIZE] __attribute__((aligned(PAGE_SIZE)));
 
 // terminal_t terms[NUM_TERM];
 
@@ -574,6 +574,15 @@ int32_t switch_terminal(int new_term){
       // exec_shell_term(new_term);
       // execute((uint8_t*) "shell");
   }
+  if(new_term == run_term){
+         vmem_pt[0] = VMEM_P_ENTRY;
+        page_dir[VIDMAP_IDX + 1] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | PDIR_MASK);  
+  }
+  else{
+        vmem_pt[0] = (((uint32_t)_32_MB + (run_term*FOUR_KB)) | PDIR_MASK);
+        page_dir[VIDMAP_IDX + 1] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | PDIR_MASK);  
+  }
+  flush_tlb();
   sti();
   return 0;
 } 

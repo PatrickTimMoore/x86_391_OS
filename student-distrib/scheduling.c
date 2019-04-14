@@ -20,6 +20,7 @@
 #define _32_MB                0x2000000
 #define ADDR_BLACKOUT         0xFFFFF000
 #define VMEM_PD_ENTRY_MASK    0x00000103
+#define VMEM_P_ENTRY          0xB8007
 //Frequency
 #define FREQ_10MS		11932
 
@@ -72,7 +73,6 @@ void sched_switch(int term_from, int term_to){
 	int pid_to = terms[term_to].act_pid;
 	pcb_t* pcb_from;
 	pcb_t* pcb_to;
-
 	if(term_from < 0 || term_to < 0) { 	//|| terms[term_from].act_pid < 0 || terms[term_to].act_pid < 0 ){
 		// printf("Something's not right; term_from: %d, term_to: %d, act_pid_from: %d, act_pid_to: %d\n", term_from, term_to, terms[term_from].act_pid, terms[term_to].act_, );
 		// return -1;
@@ -81,6 +81,15 @@ void sched_switch(int term_from, int term_to){
 
     //Repage to pid_to's program load
 	page_dir[PROC_PD_IDX] = ((EIGHT_MB + (pid_to * FOUR_MB)) & ADDR_BLACKOUT) + PROC_ATT;
+	//map the video memory to the correct place
+	if(term_to == term_num){
+         vmem_pt[0] = VMEM_P_ENTRY;
+        page_dir[VIDMAP_IDX + 1] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | PDIR_MASK);  
+	}
+	else{
+        vmem_pt[0] = (((uint32_t)_32_MB + (term_to*FOUR_KB)) | PDIR_MASK);
+        page_dir[VIDMAP_IDX + 1] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | PDIR_MASK);  
+	}
 	flush_tlb();
 	// printf("Switch from term %d (process %d) to term %d (process %d); run_term is currently %d\n", term_from, terms[term_from].act_pid, term_to, terms[term_to].act_pid, run_term);
     // //remap the video memory to correct place

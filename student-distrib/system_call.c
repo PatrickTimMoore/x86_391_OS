@@ -579,17 +579,10 @@ int32_t vidmap (uint8_t** screen_start){
     vmem_pt[i] = EMPTY_P_ENTRY;
   }
 
-  //The repage
-  if(run_term == term_num){
-      vmem_pt[0] = VMEM_P_ENTRY;
-  }
-  else{
-  	  vmem_pt[0] = (((uint32_t)_32_MB + (run_term*FOUR_KB)) | PDIR_MASK);
-  }
+  //map the first entry of our page table to video memory
+  vmem_pt[0] = VMEM_P_ENTRY;
 
-  //vmem_pt[term_num] = VMEM_P_ENTRY;
-
-  page_dir[VIDMAP_IDX+1] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | PDIR_MASK);
+  page_dir[VIDMAP_IDX + 1] = ((((uint32_t) vmem_pt) & ADDR_BLACKOUT) | PDIR_MASK);
   flush_tlb();
 
   return (int32_t)*screen_start;
