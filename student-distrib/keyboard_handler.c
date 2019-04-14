@@ -347,9 +347,10 @@ int32_t terminal_read(int32_t fd, void* buf, int32_t nbytes){
 		return 0;
 	}
 	//spin to wait the last interrupt ends
-	while(!terms[term_num].entered);
+	while(!terms[run_term].entered);
+
 	//clear the read flag
-	terms[term_num].entered = 0;
+	terms[run_term].entered= 0;
 	//cast the buf into new type
 	uint8_t* buf_uint = (uint8_t*)buf;
 	//loop variabe
@@ -427,7 +428,8 @@ int32_t terminal_write(int32_t fd, const void* buf, int32_t nbytes){
 		if(buf_uint[loop] == NULL){
 			break;
 		}
-    if(term_num == run_term){
+
+    if(term_num == get_curr_pcb()->terminal){
       putc(buf_uint[loop]);
     }
     else{

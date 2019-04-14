@@ -16,7 +16,7 @@ typedef struct term{
 	uint32_t init_;  // boolean value, says if initialized or not
 	uint32_t t_esp;
 	uint32_t t_ebp;
-	int32_t entered;
+	volatile int32_t entered;
 
 }terminal_t;
 

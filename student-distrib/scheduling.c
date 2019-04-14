@@ -21,7 +21,7 @@
 #define ADDR_BLACKOUT         0xFFFFF000
 #define VMEM_PD_ENTRY_MASK    0x00000103
 //Frequency
-#define FREQ_10MS		11931
+#define FREQ_10MS		11932
 
 //Mode 3 (Square Wave Mode)
 #define MODE_3			0x36
@@ -79,6 +79,9 @@ void sched_switch(int term_from, int term_to){
 		return;
 	}
 
+    //Repage to pid_to's program load
+	page_dir[PROC_PD_IDX] = ((EIGHT_MB + (pid_to * FOUR_MB)) & ADDR_BLACKOUT) + PROC_ATT;
+	flush_tlb();
 	// printf("Switch from term %d (process %d) to term %d (process %d); run_term is currently %d\n", term_from, terms[term_from].act_pid, term_to, terms[term_to].act_pid, run_term);
     // //remap the video memory to correct place
     // if(run_term != term_num){
@@ -126,16 +129,15 @@ void sched_switch(int term_from, int term_to){
 
   		//Change up the process bookkeeping, switch the stacks so the return context switches
 
-		//Repage to pid_to's program load
-		page_dir[PROC_PD_IDX] = ((EIGHT_MB + (pid_to * FOUR_MB)) & ADDR_BLACKOUT) + PROC_ATT;
-		flush_tlb();
+        //Switch the currently running terminal for system calls
+    	run_term = term_to;
+		
 
 		//Update the TSS
   		tss.esp0 = EIGHT_MB - (EIGHT_KB*pid_to) - FOUR;
   		tss.ss0 = KERNEL_DS;
 
-  		//Switch the currently running terminal for system calls
-    	run_term = term_to;
+  
 
     	//Load new stack, on which context switch should be set up
     	asm volatile ("   \n\

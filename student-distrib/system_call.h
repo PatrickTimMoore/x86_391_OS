@@ -29,6 +29,7 @@ typedef struct proc_ctrl_b{
 	uint32_t esp;
 	uint32_t ebp0;
 	uint32_t esp0;
+	uint32_t terminal;
 	file_desc_t file_arr[FILES_NUM];
 	uint8_t argbuf[ARG_BUF_SIZE];
 }pcb_t;

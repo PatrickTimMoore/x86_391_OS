@@ -42,6 +42,9 @@
 #define FOUR_KB         4096
 #define _32_MB                0x2000000
 
+
+#define MASK_FOR_PCB    0xFFFFE000 
+
 uint32_t vmem_pt[PT_SIZE] __attribute__((aligned(PAGE_SIZE)));
 
 int32_t process_bit_map[6]={0, 0, 0, 0, 0, 0};
@@ -137,16 +140,12 @@ int32_t halt (uint8_t status){
 */
 int32_t execute (const uint8_t* command){
   
-  //JANK
-  sti();
-  while(run_term != term_num);
-  cli();
 
    //If we're off just drop the request
    // if(run_term != term_num){
       // return;
    // }
-
+   cli();
    int i, cmdstart, cmdend, cmdlen, byt, offset;
    dentry_t d;
    uint8_t cmd_buf[MAX_BUF_SIZE];
@@ -305,10 +304,10 @@ int32_t execute (const uint8_t* command){
     // pcb_ptr->next_idx = 0;
     // pcb_ptr->pid0 = (terms[term_num]).act_pid;
     // (terms[term_num]).act_pid = process_num;
-    pcb_ptr->pid0 = (terms[run_term]).act_pid;
-    (terms[run_term]).act_pid = process_num;
+    pcb_ptr->pid0 = (terms[term_num]).act_pid;
+    (terms[term_num]).act_pid = process_num;
     pcb_ptr->pid = process_num;
-
+    pcb_ptr->terminal = term_num;
     for(i = 0; i < argbound; i++){
       (pcb_ptr->argbuf)[i] = test_s[i];
     }
@@ -380,8 +379,8 @@ int32_t read (int32_t fd, void* buf, int32_t nbytes){
     return -1;
   }
  
-  pcb_ptr = (pcb_t*)(EIGHT_MB - ((terms[run_term]).act_pid + 1)*EIGHT_KB);
- 
+  //pcb_ptr = (pcb_t*)(EIGHT_MB - ((terms[term_num]).act_pid + 1)*EIGHT_KB);
+  pcb_ptr = get_curr_pcb();
   if((((pcb_ptr->file_arr)[fd].flags & USED_MASK) == 0) ||
    (((pcb_ptr->file_arr)[fd].flags & READ_MASK) == 0)){
     printf("read (fd:%d): I can't read from this shit go away\n", fd);
@@ -409,8 +408,8 @@ int32_t write (int32_t fd, const void* buf, int32_t nbytes){
     return -1;
   }
 
-  pcb_ptr = (pcb_t*)(EIGHT_MB - ((terms[run_term]).act_pid + 1)*EIGHT_KB);
-
+  //pcb_ptr = (pcb_t*)(EIGHT_MB - ((terms[run_term]).act_pid + 1)*EIGHT_KB);
+   pcb_ptr = get_curr_pcb();
   if((((pcb_ptr->file_arr)[fd].flags & USED_MASK) == 0) ||
    (((pcb_ptr->file_arr)[fd].flags & WRITE_MASK) == 0)){
     printf("write: I can't write to this shit go away\n");
@@ -627,8 +626,16 @@ int32_t sigreturn (void){
 *  effects: 
 */
 extern pcb_t* get_curr_pcb(){
-  // return (pcb_t*)(EIGHT_MB - ((terms[term_num]).act_pid + 1)*EIGHT_KB);
-  return (pcb_t*)(EIGHT_MB - ((terms[run_term]).act_pid + 1)*EIGHT_KB);
+  
+  pcb_t* ptr;
+	asm volatile("				   \n\
+				andl %%esp, %%eax  \n\
+				"
+				:"=a"(ptr)
+				:"a"(MASK_FOR_PCB)
+				:"cc"
+				);
+	return ptr;
 }
 
 
