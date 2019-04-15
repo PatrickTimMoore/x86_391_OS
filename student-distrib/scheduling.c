@@ -69,10 +69,8 @@ void pit_handler(){
 
 void sched_switch(int term_from, int term_to){
 	// printf("Scheduling switching...\n");
-	int pid_from = terms[term_from].act_pid;
+	//int pid_from = terms[term_from].act_pid;
 	int pid_to = terms[term_to].act_pid;
-	pcb_t* pcb_from;
-	pcb_t* pcb_to;
 	// if term from
 	if(term_from < 0 || term_to < 0 || term_from >= NUM_TERM || term_to >= NUM_TERM)
 		return;
