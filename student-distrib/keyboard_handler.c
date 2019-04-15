@@ -560,19 +560,6 @@ int32_t switch_terminal(int new_term){
   if(!terms[new_term].init_){
       //KEYBOARD HANDLER DOES NO PROCESS SWITCHING; Simply schedules terminal to start the first time
       sched_to_exec[new_term] = 1;
-
-      // run_term = new_term;
-      // terms[new_term].init_ = 1;
-      //   asm volatile ("   \n\
-      //   movl %%esp, %%eax \n\
-      //   movl %%ebp, %%ebx \n\
-      //   "
-      //   :"=a"(pcb_from->esp), "=b"(pcb_from->ebp)
-      //   :
-      //   :"cc"
-      // );
-      // exec_shell_term(new_term);
-      // execute((uint8_t*) "shell");
   }
   if(new_term == run_term){
          vmem_pt[0] = VMEM_P_ENTRY;
