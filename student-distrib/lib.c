@@ -191,15 +191,16 @@ void putc(uint8_t c) {
 
 
 
-/* void putc(uint8_t c);
+/* void putc_sched(uint8_t c);
  * Inputs: uint_8* c = character to print
  * Return Value: void
- *  Function: Output a character to the console */
+ *  Function: Output a character to the running console */
 void putc_sched(uint8_t c) {
     if(c == '\n' || c == '\r') {
         //change to a new line
         set_cursor_pos_sched(0, terms[run_term].curs_y+1);
     } else {
+        // edit memory of running terminal, as opposed to the displayed terminal above
         *(uint8_t *)(terms[run_term].vidmem + ((NUM_COLS * terms[run_term].curs_y + terms[run_term].curs_x) << 1)) = c;
         *(uint8_t *)(terms[run_term].vidmem + ((NUM_COLS * terms[run_term].curs_y + terms[run_term].curs_x) << 1) + 1) = ATTRIB;
         //set the new cursor
@@ -535,7 +536,7 @@ void scroll_screen_up(){
 *   Inputs: void
 *   Return Value: void
 *   Function: scroll the screen up by one line to get a new 
-*   empty line available
+*   empty line available for the running terminal
 */
 
 void scroll_screen_up_sched(){
@@ -602,7 +603,7 @@ void set_cursor_pos(int32_t x, int32_t y)
 * void set_cursor_pos_sched(int x, int y)
 *   Inputs: x, y are the position to be set to
 *   Return Value: void
-*   Function: set the cursor to position (x, y)
+*   Function: set the cursor to position (x, y) for running terminal
 */
 void set_cursor_pos_sched(int32_t x, int32_t y)
  {
@@ -625,7 +626,6 @@ void set_cursor_pos_sched(int32_t x, int32_t y)
         terms[run_term].curs_x=0;
         terms[run_term].curs_y=NUM_ROWS-1;
     }
-
 }
 
 /*
