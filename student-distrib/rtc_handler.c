@@ -17,7 +17,8 @@
 #define RTC_LINE          8
 
 #define NUM_TERMS         3
-#define BIG_FREQ          1024
+// #define BIG_FREQ          1024
+#define BIG_FREQ          512
 //store the state of the RTC interrupt
 volatile int rtc_interrupt_happened[NUM_TERMS];
 //the flag to indicate the RTC is open
@@ -48,7 +49,10 @@ void init_rtc(){
      outb(old_value, RTC_PORT2);
    
      //RUN THAT SHIT
-     change_frequency(RTC_1024Hz);
+     // change_frequency(RTC_1024Hz);
+
+     //Maximum RTC actually runs at is 512, so we fix it to do so so our RTC-dependent programs tick consistently
+     change_frequency(RTC_512Hz);
 
      //Initializing the bitmap
      for (i = 0; i < NUM_TERMS; ++i){
