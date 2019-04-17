@@ -61,6 +61,7 @@ void pit_handler(){
 			return;
 		}
 	}while(!(terms[next_term].init_ || is_sched_to_exec(next_term)));
+	// printf("Scheduling from %d to %d\n", run_term, next_term );
 	// context switch between curr run_term and next term, then update run_term
 	sched_switch(run_term, next_term);
 	sti();

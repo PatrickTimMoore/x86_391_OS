@@ -3,6 +3,9 @@
 #include "lib.h"
 #include "rtc_handler.h"
 #include "i8259.h"
+
+#include "scheduling.h"
+
 //The index for control register A and B
 #define CTRA              0x0A
 #define CTRB              0x0B 
@@ -13,10 +16,16 @@
 #define FREQUENCY_MASK    0xF0
 #define RTC_LINE          8
 
-//store the state of the RTC interrut
-volatile int rtc_interrupt_happened =0;
+#define NUM_TERMS         3
+#define BIG_FREQ          1024
+//store the state of the RTC interrupt
+volatile int rtc_interrupt_happened[NUM_TERMS];
 //the flag to indicate the RTC is open
 static int rtc_open_flag = 0;
+//the lookup table for the requested rtc
+static volatile int rtc_req[NUM_TERMS];
+//tick count
+static volatile uint32_t tick_count[NUM_TERMS];
 
 /* 
  ** int init_rtc()
@@ -27,6 +36,7 @@ static int rtc_open_flag = 0;
  ** initialize the rtc.
 */
 void init_rtc(){
+     int i;
      uint32_t old_value;
      //read the old value in control register B
      outb(CTRB, RTC_PORT1);
@@ -37,8 +47,23 @@ void init_rtc(){
      outb(CTRB, RTC_PORT1);
      outb(old_value, RTC_PORT2);
    
+     //RUN THAT SHIT
+     change_frequency(RTC_1024Hz);
+
+     //Initializing the bitmap
+     for (i = 0; i < NUM_TERMS; ++i){
+        rtc_req[i] = 1;
+        tick_count[i] = 1;
+        rtc_interrupt_happened[i] = 0;
+     }
+
+     //set the count
+     // tick_count = 1;
+
      //enable the irq line for RTC
      enable_irq(RTC_LINE);
+
+
 }
 
 /* 
@@ -56,19 +81,26 @@ void rtc_handler(){
 	//clear the interrupts
 	cli();
     //mark that the interrupt occured
-    rtc_interrupt_happened=1;
+    //UP THAT COUNT YEET
+    // tick_count[run_term]++;
+    tick_count[0]++;
+    tick_count[1]++;
+    tick_count[2]++;
+    if(!(tick_count[run_term] % rtc_req[run_term])){
+        rtc_interrupt_happened[run_term] = 1;
+        tick_count[run_term] = 1;
+    }
     //input from the control register to allow another interrupt
     outb(CTRC, RTC_PORT1);
     inb(RTC_PORT2);
     //enable the interrupt
     sti();
-
 }
 
 
 /* 
  ** void rtc_open()
- ** Inputs: the pointer to the file(it is negleceted )
+ ** Inputs: the pointer to the file(it is neglected )
  ** Return value: 0
  ** Description: 
  ** This function initialize the RTC to the default frequency
@@ -79,8 +111,8 @@ int32_t rtc_open(const uint8_t * filename){
     //mark the flag to indicate the rtc is open
     rtc_open_flag = 1;
     //change the frequency to defualt value: 2
-    int32_t default_freq= 2;
-    change_frequency(default_freq);
+    // int32_t default_freq= 2;
+    // change_frequency(default_freq);
     return 0;
 }
 
@@ -99,9 +131,12 @@ int32_t rtc_read (int32_t fd, void* buf, int32_t nbytes){
         return -1;
     }
     //wait until the next interrupt happens
-    while (!rtc_interrupt_happened);    
+    // while (!rtc_interrupt_happened);    
+    // tick_count[run_term] = 1;
+    while(!rtc_interrupt_happened[run_term]);
+    // tick_count[run_term] = 1;
     // clear the flag for rtc interrupts 
-    rtc_interrupt_happened= 0;
+    rtc_interrupt_happened[run_term] = 0;
     //always return 0
     return 0;
  }
@@ -120,22 +155,26 @@ int32_t  rtc_write(int32_t fd, const void* buf, int32_t nbytes){
     if( rtc_open_flag == 0){
         return -1;
     }
+
+    //Set the run term's thing
     int32_t ret_val;
+    rtc_req[run_term] = BIG_FREQ/(*(int32_t*)buf);
+    ret_val = nbytes;
     //save the flags and disable the interrupts
-    int32_t flags;   
-    cli_and_save(flags);
-    //check if the buffer is null or we don't have four byte to write 
-    if(nbytes==4 && buf !=NULL){
-        //set the RTC to the desired frequency
-        change_frequency(*((int32_t*)buf));
-        ret_val=nbytes;
-    }
-    else{
-        //return -1 for faliure
-        ret_val=-1;
-    }
-    //restore the flags for RTC
-    restore_flags(flags);
+    // int32_t flags;   
+    // cli_and_save(flags);
+    // //check if the buffer is null or we don't have four byte to write 
+    // if(nbytes==4 && buf !=NULL){
+    //     //set the RTC to the desired frequency
+    //     change_frequency(*((int32_t*)buf));
+    //     ret_val=nbytes;
+    // }
+    // else{
+    //     //return -1 for faliure
+    //     ret_val=-1;
+    // }
+    // //restore the flags for RTC
+    // restore_flags(flags);
     return ret_val;   
 }
 
