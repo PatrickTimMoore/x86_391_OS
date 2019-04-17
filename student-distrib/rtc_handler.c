@@ -90,9 +90,17 @@ void rtc_handler(){
     tick_count[0]++;
     tick_count[1]++;
     tick_count[2]++;
-    if((tick_count[run_term] % rtc_req[run_term]) == 0){
-        rtc_interrupt_happened[run_term] = 1;
-        tick_count[run_term] = 1;
+    if((tick_count[0] % rtc_req[0]) == 0){
+        rtc_interrupt_happened[0] = 1;
+        tick_count[0] = 1;
+    }
+    if((tick_count[1] % rtc_req[1]) == 0){
+        rtc_interrupt_happened[1] = 1;
+        tick_count[1] = 1;
+    }
+    if((tick_count[2] % rtc_req[2]) == 0){
+        rtc_interrupt_happened[2] = 1;
+        tick_count[2] = 1;
     }
     //input from the control register to allow another interrupt
     outb(CTRC, RTC_PORT1);
@@ -131,16 +139,16 @@ int32_t rtc_open(const uint8_t * filename){
 int32_t rtc_read (int32_t fd, void* buf, int32_t nbytes){
     sti();
     //check if the RTC is open or not
-    if( rtc_open_flag == 0){
-        return -1;
-    }
+    //if( rtc_open_flag == 0){
+    //    return -1;
+    //}
     //wait until the next interrupt happens
     // while (!rtc_interrupt_happened);    
-    // tick_count[run_term] = 1;
     while(!rtc_interrupt_happened[run_term]);
     // tick_count[run_term] = 1;
     // clear the flag for rtc interrupts 
     rtc_interrupt_happened[run_term] = 0;
+
     //always return 0
     return 0;
  }

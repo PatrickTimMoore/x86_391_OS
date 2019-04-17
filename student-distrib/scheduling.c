@@ -47,9 +47,11 @@ void init_pit(){
 void pit_handler(){
 	// printf("PIT INTERRUPT...\n");
 	//Start current term
+
 	int next_term = run_term;
 	//Send the EoI as the traditions dictate
 	send_eoi(PIT_IRQ_LINE);
+	cli();
 	//Determine next terminal to schedule
 	do{
 		//Round robin to next terminal to run
