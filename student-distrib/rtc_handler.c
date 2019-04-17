@@ -86,7 +86,7 @@ void rtc_handler(){
     tick_count[0]++;
     tick_count[1]++;
     tick_count[2]++;
-    if(!(tick_count[run_term] % rtc_req[run_term])){
+    if((tick_count[run_term] % rtc_req[run_term]) == 0){
         rtc_interrupt_happened[run_term] = 1;
         tick_count[run_term] = 1;
     }
@@ -150,9 +150,10 @@ int32_t rtc_read (int32_t fd, void* buf, int32_t nbytes){
  ** This function tries to set the RTC to desired frequency
  */
 int32_t  rtc_write(int32_t fd, const void* buf, int32_t nbytes){
-    sti();
+    cli();
     //check if the RTC is open or not
     if( rtc_open_flag == 0){
+        sti();
         return -1;
     }
 
@@ -160,6 +161,7 @@ int32_t  rtc_write(int32_t fd, const void* buf, int32_t nbytes){
     int32_t ret_val;
     rtc_req[run_term] = BIG_FREQ/(*(int32_t*)buf);
     ret_val = nbytes;
+    sti();
     //save the flags and disable the interrupts
     // int32_t flags;   
     // cli_and_save(flags);
@@ -187,7 +189,7 @@ int32_t  rtc_write(int32_t fd, const void* buf, int32_t nbytes){
  */
 int32_t rtc_close(int32_t fd){
     //clear the rtc open flag
-    rtc_open_flag = 0;
+    //rtc_open_flag = 0;
     //always return 0
     return 0;
  }
