@@ -12,16 +12,37 @@
 ** Inputs   : none
 ** Outputs  : none
 ** Registers: all the registers and flags are saved
+**
+** PUSHING EAX TWICE AS A DUMMY VARIABLE
 */
 
 #define INTERRUPT_HANDLER(func_name, interrupt_handler)        \
 .GLOBAL  func_name                                            ;\
 func_name:                                  ;\
-  pushal                                  ;\
-  pushfl                                    ;\
-  call interrupt_handler                        ;\
-  popfl                                   ;\
-  popal                                   ;\
+  pushl %eax                              ;\
+  pushl %fs                               ;\
+  pushl %es                               ;\
+  pushl %ds                               ;\
+  pushl %eax                              ;\
+  pushl %ebp                              ;\
+  pushl %edi                              ;\
+  pushl %esi                              ;\
+  pushl %edx                              ;\
+  pushl %ecx                              ;\
+  pushl %ebx                              ;\
+  call interrupt_handler                  ;\
+  call sig_pending                        ;\
+  popl  %ebx                              ;\
+  popl  %ecx                              ;\
+  popl  %edx                              ;\
+  popl  %esi                              ;\
+  popl  %edi                              ;\
+  popl  %ebp                              ;\
+  popl  %eax                              ;\
+  popl  %ds                               ;\
+  popl  %es                               ;\
+  popl  %fs                               ;\
+  addl $4, %esp                           ;\
   iret                                    ;\
 
  /*the interface for keyboard handler*/
@@ -96,28 +117,66 @@ jump_table_system_call:
 ** Inputs   : none
 ** Outputs  : none
 ** Registers: all the registers and flags are saved
+**
+** PUSH EAX TWICE, ONCE AS A DUMMY VARIABLE
 */
 
 #define EXCEPTION_HANDLER(func_name, exception_handler)        \
 .GLOBAL  func_name                                            ;\
-func_name:                                  ;\
-  pushal                                  ;\
-  pushfl                                    ;\
-  call exception_handler                        ;\
-  popfl                                   ;\
-  popal                                   ;\
+func_name:                                ;\
+  pushl %eax                              ;\
+  pushl %fs                               ;\
+  pushl %es                               ;\
+  pushl %ds                               ;\
+  pushl %eax                              ;\
+  pushl %ebp                              ;\
+  pushl %edi                              ;\
+  pushl %esi                              ;\
+  pushl %edx                              ;\
+  pushl %ecx                              ;\
+  pushl %ebx                              ;\
+  call exception_handler                  ;\
+  call sig_pending                        ;\
+  popl  %ebx                              ;\
+  popl  %ecx                              ;\
+  popl  %edx                              ;\
+  popl  %esi                              ;\
+  popl  %edi                              ;\
+  popl  %ebp                              ;\
+  popl  %eax                              ;\
+  popl  %ds                               ;\
+  popl  %es                               ;\
+  popl  %fs                               ;\
+  addl  $4, %esp                          ;\
   iret                                    ;\
 
 
 #define EXCEPTION_HANDLER_ERROR(func_name, exception_handler)        \
 .GLOBAL  func_name                                            ;\
 func_name:                                  ;\
-  pushal                                  ;\
-  pushfl                                    ;\
-  call exception_handler                        ;\
-  popfl                                   ;\
-  popal                                   ;\
-  addl $4, %esp                           ;\
+  pushl %fs                               ;\
+  pushl %es                               ;\
+  pushl %ds                               ;\
+  pushl %eax                              ;\
+  pushl %ebp                              ;\
+  pushl %edi                              ;\
+  pushl %esi                              ;\
+  pushl %edx                              ;\
+  pushl %ecx                              ;\
+  pushl %ebx                              ;\
+  call exception_handler                  ;\
+  call sig_pending                        ;\
+  popl  %ebx                              ;\
+  popl  %ecx                              ;\
+  popl  %edx                              ;\
+  popl  %esi                              ;\
+  popl  %edi                              ;\
+  popl  %ebp                              ;\
+  popl  %eax                              ;\
+  popl  %ds                               ;\
+  popl  %es                               ;\
+  popl  %fs                               ;\
+  addl  $4, %esp                          ;\
   iret                                    ;\
 
 

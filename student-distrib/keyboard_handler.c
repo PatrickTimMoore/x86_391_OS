@@ -37,6 +37,7 @@
 #include "paging.h"
 #include "system_call.h"
 #include "scheduling.h"
+#include "signal.h"
 
 #define IRQ1KEYBOARD          0x01
 #define KEYBOARDDATAPORT      0x60
@@ -69,6 +70,7 @@
 #define F1                    0x3B
 #define F2                    0x3C
 #define F3                    0x3D
+#define SCANCODE_C            0x2E
 
 //the size of keyboard buffer
 #define BUFFER_SIZE           127
@@ -235,6 +237,10 @@ void keyboard_handler(){
                 		    set_cursor_pos(0, 0);
                         break;
                 	  }
+                    else if(scancodeVal == SCANCODE_C){
+                        printf("^C\n");
+                        raise_sig(INTERRUPT);
+                    }
                 //check if the enter key is hit
                 } else if(scancodeVal == ENTERKEY){
               		  terms[term_num].entered = 1; //sets flag for terminal to read the (terms[term_num].keyboard_buffer)

@@ -7,6 +7,7 @@
 #include "rtc_handler.h"
 #include "x86_desc.h"
 #include "scheduling.h"
+#include "signal.h"
 
 #define	MAX_BUF_SIZE    200
 #define	FOUR		        4		//Hi peter	
@@ -40,7 +41,7 @@
 #define BYTE_SIZE       8
 #define VIDMAP_IDX      33
 #define FOUR_KB         4096
-#define _32_MB                0x2000000
+#define _32_MB          0x2000000
 
 
 #define MASK_FOR_PCB    0xFFFFE000 
@@ -49,7 +50,7 @@
 uint32_t vmem_pt[PT_SIZE] __attribute__((aligned(PAGE_SIZE)));
 
 //Bitmap for the processes
-int32_t process_bit_map[6]={0, 0, 0, 0, 0, 0};
+int32_t process_bit_map[PROCESS_NUM]={0, 0, 0, 0, 0, 0};
 // static int (terms[term_num]).act_pid = -1;
 //Our jump table
 static jump_table_t terminal_jt = {terminal_open, terminal_read, terminal_write, terminal_close};
@@ -151,6 +152,12 @@ int32_t execute (const uint8_t* command){
       // return;
    // }
    cli();
+
+   //Signals are good to go if they haven't yet
+   if(!signals_ready){
+    signals_ready = 1;
+   }
+   
    int i, cmdstart, cmdend, cmdlen, byt, offset;
    dentry_t d;
    uint8_t cmd_buf[MAX_BUF_SIZE];
@@ -324,6 +331,13 @@ int32_t execute (const uint8_t* command){
     (terms[term_num]).act_pid = process_num;
     pcb_ptr->pid = process_num;
     pcb_ptr->terminal = term_num;
+
+    // Initializes signal information
+    for (i = 0; i < NUM_SIGS; ++i){
+      (pcb_ptr->sig_data).sig_stat[i] = 0;
+      (pcb_ptr->sig_data).hops[i] = 0;
+    }
+
     // copies the command arguments
     for(i = 0; i < argbound; i++){
       (pcb_ptr->argbuf)[i] = test_s[i];
@@ -632,7 +646,7 @@ int32_t vidmap (uint8_t** screen_start){
 
 /* 
 *  Function: int32_t set_handler
-*  Description: Does nothing. Related to signal handling
+*  Description: Does nothing. Related to signal handling LOL NOT ANYMORE
 *  Inputs: 
 *  		signum - signal number
 *  		handler_address - address of handler
@@ -641,7 +655,20 @@ int32_t vidmap (uint8_t** screen_start){
 */
 
 int32_t set_handler (int32_t signum, void* handler_address){
-	return -1;
+	pcb_t* pcb_ptr;
+  if(signum < 0 || signum >= NUM_SIGS){
+    //GET THE FUCK OUTTA HERE
+    return -1;
+  }
+
+  if(!handler_address){
+    // printf("Invalid pointer; not in userspace\n");
+    return -1;
+  }
+
+  pcb_ptr = get_curr_pcb();
+  (pcb_ptr->sig_data).hops[signum] = (uint32_t)handler_address;
+  return 0;
 }
 
 

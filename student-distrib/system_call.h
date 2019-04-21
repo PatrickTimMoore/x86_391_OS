@@ -6,6 +6,8 @@
 #define FILES_NUM		8
 #define FUN_PTR_NUM		3
 #define ARG_BUF_SIZE	200
+#define NUM_SIGS		5
+#define PROCESS_NUM     6
 
 //yeezy just jumped over this
 typedef struct jump_man{
@@ -22,6 +24,14 @@ typedef struct file_desc{
 	int32_t flags;
 } file_desc_t;
 
+
+typedef struct signal_data{
+	int32_t sig_stat[NUM_SIGS];
+
+	//Handler Operations Pointer
+	uint32_t hops[NUM_SIGS];
+}sig_data_t;
+
 typedef struct proc_ctrl_b{
 	int32_t pid0;
 	int32_t pid;
@@ -32,14 +42,44 @@ typedef struct proc_ctrl_b{
 	uint32_t terminal;
 	file_desc_t file_arr[FILES_NUM];
 	uint8_t argbuf[ARG_BUF_SIZE];
+	sig_data_t sig_data;
 }pcb_t;
+
 
 // FD flags
 // bit 0 = used
 // bit 1 = read
 // bit 2 = write
 
-extern int32_t process_bit_map[6];
+// sig_stat flags:
+// 	0: unused
+// -1: pending
+// 	1: executing 
+
+  // pushl %fs                               ;\
+  // pushl %es                               ;\
+  // pushl %ds                               ;\
+  // pushl %eax                              ;\
+  // pushl %ebp                              ;\
+  // pushl %edi                              ;\
+  // pushl %esi                              ;\
+  // pushl %edx                              ;\
+  // pushl %ecx                              ;\
+  // pushl %ebx                              ;\
+
+ 
+  // popl  %ebx                              ;\
+  // popl  %ecx                              ;\
+  // popl  %edx                              ;\
+  // popl  %esi                              ;\
+  // popl  %edi                              ;\
+  // popl  %ebp                              ;\
+  // popl  %eax                              ;\
+  // popl  %ds                               ;\
+  // popl  %es                               ;\
+  // popl  %fs                               ;\
+  Look ma no slashes
+extern int32_t process_bit_map[PROCESS_NUM];
 
 //yeet
 extern int32_t halt (uint8_t status);

@@ -3,11 +3,20 @@
 
 #include "types.h"
 
-int sig_bitmap[5];
+#define DIV_ZERO	0
+#define SEGFAULT	1	//God we missed you
+#define INTERRUPT	2
+#define ALARM		3
+#define USER1		4
 
-void kill_task();
-void ignore();
+extern int signals_ready;
 
-void signal_pending();
+void kill_task(void);
+void ignore(void);
+
+
+// void init_signals(void);
+void sig_pending(void);
+int32_t raise_sig(uint32_t signum);
 
 #endif

@@ -1,5 +1,6 @@
 #include "exception_handler.h"
 #include "system_call.h"
+#include "signal.h"
 
 /*
  * exception_handler_0
@@ -9,6 +10,7 @@
  * and jumps into while(1) loop
 */
  void exception_handler_0(){
+  raise_sig(DIV_ZERO);
  	printf("Divide Error Exception\n");
  	if(get_curr_pid() == -1){while(1);}
   else{halt(0);}
@@ -203,10 +205,12 @@
       :"cc"
     );
  	printf("Page-Fault Exception (0x%x)\n", addr);
-
-
+  // raise_sig(SEGFAULT);
   if(get_curr_pid() == -1){while(1);}
-  else{halt(0);}
+  else{
+    halt(0);
+    // raise_sig(SEGFAULT);
+  }
  }
 
  /*
