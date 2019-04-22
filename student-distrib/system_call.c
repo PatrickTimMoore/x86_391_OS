@@ -681,6 +681,7 @@ int32_t set_handler (int32_t signum, void* handler_address){
 */
 
 int32_t sigreturn (void){
+  printf("Sig Returning\n");
 	return -1;
 }
 

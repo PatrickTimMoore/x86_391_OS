@@ -18,7 +18,7 @@
 
 #define INTERRUPT_HANDLER(func_name, interrupt_handler)        \
 .GLOBAL  func_name                                            ;\
-func_name:                                  ;\
+func_name:                                ;\
   pushl %eax                              ;\
   pushl %fs                               ;\
   pushl %es                               ;\
@@ -30,8 +30,8 @@ func_name:                                  ;\
   pushl %edx                              ;\
   pushl %ecx                              ;\
   pushl %ebx                              ;\
-  call interrupt_handler                  ;\
-  call sig_pending                        ;\
+  call  interrupt_handler                 ;\
+  call  sig_pending                       ;\
   popl  %ebx                              ;\
   popl  %ecx                              ;\
   popl  %edx                              ;\
@@ -42,7 +42,7 @@ func_name:                                  ;\
   popl  %ds                               ;\
   popl  %es                               ;\
   popl  %fs                               ;\
-  addl $4, %esp                           ;\
+  addl  $4, %esp                          ;\
   iret                                    ;\
 
  /*the interface for keyboard handler*/

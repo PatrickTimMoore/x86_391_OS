@@ -27,16 +27,20 @@ void ignore(void){
 void sig_pending(void){
 	if(!(signals_ready == 1)){return;}
 	int i;
-	uint32_t user_esp;
+	uint32_t user_esp, handler_addr;
+    // uint32_t* intx80ptr, moveax9ptr;
+    // pcb_t* pcb_ptr;
+
+ 	
  	pcb_t* pcb_ptr = get_pcb(terms[run_term].act_pid);
-					asm volatile ("   \n\
-    					movl 60(%%ebp), %%eax \n\
-    					"
-    					:"=a"(user_esp)
-    					:
-    					:"cc"
-    				);
-    				printf("User esp: %x\n", user_esp);
+					// asm volatile ("   \n\
+    	// 				movl 64(%%ebp), %%eax \n\
+    	// 				"
+    	// 				:"=a"(user_esp)
+    	// 				:
+    	// 				:"cc"
+    	// 			);
+    				// printf("User esp: %x\n", user_esp);
 
 	// void* hand_ptr;
 	for (i = 0; i < NUM_SIGS; ++i){
@@ -54,14 +58,72 @@ void sig_pending(void){
 					}
 				}
 				else{ //user handler
-				// 	asm volatile ("   \n\
-    // 					movl 68(%%ebp), %%eax \n\
-    // 					"
-    // 					:"=a"(user_esp)
-    // 					:
-    // 					:"cc"
-    // 				);
-    // 				// printf("User esp: %x\n", user_esp);
+					printf("we are here\n");
+					asm volatile ("   \n\
+    					movl 64(%%ebp), %%eax \n\
+    					"
+    					:"=a"(user_esp)
+    					:
+    					:"cc"
+    				);
+
+    				if(!user_esp){
+    					printf("lol you fucked up\n");
+    					return;
+    				}
+    				// printf("User esp: %x\n", user_esp);
+
+					
+ 					// pcb_ptr = get_curr_pcb();
+  					handler_addr = (pcb_ptr->sig_data).hops[i];    				
+
+					asm volatile ("   \n\
+    					movl $0xCD809090, -4(%0)  \n\
+    					movl $0xB8090000, -8(%0)  \n\
+    					movl $0x00909090, -12(%0) \n\
+    					movl 68(%%ebp), %%edi	  \n\
+    					movl %%edi, -16(%0) 	  \n\
+    					movl 64(%%ebp), %%edi	  \n\
+    					movl %%edi, -20(%0) 	  \n\
+    					movl 60(%%ebp), %%edi	  \n\
+    					movl %%edi, -24(%0) 	  \n\
+    					movl 56(%%ebp), %%edi	  \n\
+    					movl %%edi, -28(%0) 	  \n\
+    					movl 52(%%ebp), %%edi	  \n\
+    					movl %%edi, -32(%0) 	  \n\
+    					movl 48(%%ebp), %%edi	  \n\
+    					movl %%edi, -36(%0) 	  \n\
+    					movl 44(%%ebp), %%edi	  \n\
+    					movl %%edi, -40(%0) 	  \n\
+    					movl 40(%%ebp), %%edi	  \n\
+    					movl %%edi, -44(%0) 	  \n\
+    					movl 36(%%ebp), %%edi	  \n\
+    					movl %%edi, -48(%0) 	  \n\
+    					movl 32(%%ebp), %%edi	  \n\
+    					movl %%edi, -52(%0) 	  \n\
+    					movl 28(%%ebp), %%edi	  \n\
+    					movl %%edi, -56(%0) 	  \n\
+    					movl 24(%%ebp), %%edi	  \n\
+    					movl %%edi, -60(%0) 	  \n\
+    					movl 20(%%ebp), %%edi	  \n\
+    					movl %%edi, -64(%0) 	  \n\
+    					movl 16(%%ebp), %%edi	  \n\
+    					movl %%edi, -68(%0) 	  \n\
+    					movl 12(%%ebp), %%edi	  \n\
+    					movl %%edi, -72(%0) 	  \n\
+    					movl 8(%%ebp), %%edi	  \n\
+    					movl %%edi, -76(%0) 	  \n\
+    					movl %1, -80(%0) 		  \n\
+    					lea -8(%0), %%edi 		  \n\
+    					movl %%edi, -84(%0) 	  \n\
+    					jmp *%2 				  \n\
+    					"
+    					:
+    					:"r"(user_esp), "r"(i), "r"(handler_addr)
+    					:"edi", "cc"
+    				);
+					//Still push return address to sigreturn on stack
+
 
 				}
 		}

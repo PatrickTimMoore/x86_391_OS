@@ -208,7 +208,8 @@
   // raise_sig(SEGFAULT);
   if(get_curr_pid() == -1){while(1);}
   else{
-    halt(0);
+    raise_sig(SEGFAULT);
+    // halt(0);
     // raise_sig(SEGFAULT);
   }
  }
