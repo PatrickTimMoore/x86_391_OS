@@ -27,7 +27,7 @@ void ignore(void){
 void sig_pending(void){
 	if(!(signals_ready == 1)){return;}
 	int i;
-	uint32_t user_esp, handler_addr;
+	uint32_t user_esp, handler_addr, ret_add;
     // uint32_t* intx80ptr, moveax9ptr;
     // pcb_t* pcb_ptr;
 
@@ -72,15 +72,15 @@ void sig_pending(void){
     					return;
     				}
     				// printf("User esp: %x\n", user_esp);
-
+                    ret_add = user_esp -12;
 					
  					// pcb_ptr = get_curr_pcb();
   					handler_addr = (pcb_ptr->sig_data).hops[i];    				
 
 					asm volatile ("   \n\
-    					movl $0xCD809090, -4(%0)  \n\
-    					movl $0xB8090000, -8(%0)  \n\
-    					movl $0x00909090, -12(%0) \n\
+    					movl $0xCD089090, -4(%0)  \n\
+    					movl $0x00909090, -8(%0)  \n\
+    					movl $0xB8090000, -12(%0) \n\
     					movl 68(%%ebp), %%edi	  \n\
     					movl %%edi, -16(%0) 	  \n\
     					movl 64(%%ebp), %%edi	  \n\
@@ -114,14 +114,17 @@ void sig_pending(void){
     					movl 8(%%ebp), %%edi	  \n\
     					movl %%edi, -76(%0) 	  \n\
     					movl %1, -80(%0) 		  \n\
-    					lea -8(%0), %%edi 		  \n\
-    					movl %%edi, -84(%0) 	  \n\
-    					jmp *%2 				  \n\
+                        movl %3, -84(%0)          \n\
+    					movl %2, 52(%%ebp) 		  \n\
+    					movl %0, %%edi 			  \n\
+    					addl $-84, %%edi 		  \n\
+    					movl %%edi, 64(%%ebp)	  \n\
     					"
     					:
-    					:"r"(user_esp), "r"(i), "r"(handler_addr)
+    					:"r"(user_esp), "r"(i), "r"(handler_addr), "r"(ret_add)
     					:"edi", "cc"
     				);
+    				//NO RET, IRET, or JMP
 					//Still push return address to sigreturn on stack
 
 
