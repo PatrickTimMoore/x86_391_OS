@@ -3,7 +3,7 @@
 #include "lib.h"
 #include "rtc_handler.h"
 #include "i8259.h"
-
+#include "signal.h"
 #include "scheduling.h"
 
 //The index for control register A and B
@@ -27,6 +27,8 @@ static int rtc_open_flag = 0;
 static volatile int rtc_req[NUM_TERMS];
 //tick count
 static volatile uint32_t tick_count[NUM_TERMS];
+//Alarm signal counter
+static int alarm = 0;
 
 /* 
  ** int init_rtc()
@@ -63,6 +65,8 @@ void init_rtc(){
 
      //set the count
      // tick_count = 1;
+
+     alarm = 0;
 
      //enable the irq line for RTC
      enable_irq(RTC_LINE);
@@ -102,6 +106,14 @@ void rtc_handler(){
         rtc_interrupt_happened[2] = 1;
         tick_count[2] = 1;
     }
+
+    alarm++;
+    // printf("alarm: %d\n", alarm);
+    if(alarm%5120 == 0){
+        alarm = 0;
+        raise_sig(ALARM);
+    }
+
     //input from the control register to allow another interrupt
     outb(CTRC, RTC_PORT1);
     inb(RTC_PORT2);

@@ -56,29 +56,6 @@ typedef struct proc_ctrl_b{
 // -1: pending
 // 	1: executing 
 
-  // pushl %fs                               ;\
-  // pushl %es                               ;\
-  // pushl %ds                               ;\
-  // pushl %eax                              ;\
-  // pushl %ebp                              ;\
-  // pushl %edi                              ;\
-  // pushl %esi                              ;\
-  // pushl %edx                              ;\
-  // pushl %ecx                              ;\
-  // pushl %ebx                              ;\
-
- 
-  // popl  %ebx                              ;\
-  // popl  %ecx                              ;\
-  // popl  %edx                              ;\
-  // popl  %esi                              ;\
-  // popl  %edi                              ;\
-  // popl  %ebp                              ;\
-  // popl  %eax                              ;\
-  // popl  %ds                               ;\
-  // popl  %es                               ;\
-  // popl  %fs                               ;\
-  Look ma no slashes
 extern int32_t process_bit_map[PROCESS_NUM];
 
 //yeet

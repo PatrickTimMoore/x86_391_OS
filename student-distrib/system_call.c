@@ -681,9 +681,63 @@ int32_t set_handler (int32_t signum, void* handler_address){
 */
 
 int32_t sigreturn (void){
-  printf("Sig Returning\n");
-  while(1);
-  return -1;
+  // printf("Sig Return: Yeet.\n");
+  int i;
+  uint32_t user_esp, eax;
+  asm volatile ("   \n\
+      movl 60(%%ebp), %%eax \n\
+      "
+      :"=a"(user_esp)
+      :
+      :"cc"
+  );
+
+  i = *((int *)user_esp);
+  user_esp += 4;
+              // movl 24(%0), %%ebx      \n\
+
+  asm volatile ("                     \n\
+              movl 60(%0), %%edi      \n\
+              movl %%edi, 64(%%ebp)   \n\
+              movl 56(%0), %%edi      \n\
+              movl %%edi, 60(%%ebp)   \n\
+              movl 52(%0), %%edi      \n\
+              movl %%edi, 56(%%ebp)   \n\
+              movl 48(%0), %%edi      \n\
+              movl %%edi, 52(%%ebp)   \n\
+              movl 44(%0), %%edi      \n\
+              movl %%edi, 48(%%ebp)   \n\
+              movl 40(%0), %%edi      \n\
+              movl %%edi, 44(%%ebp)   \n\
+              movl 36(%0), %%edi      \n\
+              movl %%edi, 40(%%ebp)   \n\
+              movl 32(%0), %%edi      \n\
+              movl %%edi, 36(%%ebp)   \n\
+              movl 28(%0), %%edi      \n\
+              movl %%edi, 32(%%ebp)   \n\
+              movl 20(%0), %%edi      \n\
+              movl %%edi, 28(%%ebp)   \n\
+              movl 16(%0), %%edi      \n\
+              movl %%edi, 24(%%ebp)   \n\
+              movl 12(%0), %%edi      \n\
+              movl %%edi, 20(%%ebp)   \n\
+              movl 8(%0), %%edi       \n\
+              movl %%edi, 16(%%ebp)   \n\
+              movl 4(%0), %%edi       \n\
+              movl %%edi, 12(%%ebp)   \n\
+              movl (%0), %%edi        \n\
+              movl %%edi, 8(%%ebp)    \n\
+              movl 24(%0), %%eax      \n\
+              "
+              :"=a"(eax)
+              :"r"(user_esp)
+              :"edi", "cc"
+            );
+
+  // printf("Got past THAT shit\n");
+  (get_pcb(terms[run_term].act_pid)->sig_data).sig_stat[i] = 0;
+
+  return eax;
 }
 
 

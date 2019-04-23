@@ -74,6 +74,7 @@ sig_ret:
 system_call_handler:
   //push EBX, then ECX, then EDX
   # pushfl
+  pushl %eax                              
   pushl %fs
   pushl %es
   pushl %ds
@@ -110,6 +111,7 @@ system_call_handler:
   popl  %ds
   popl  %es
   popl  %fs
+  addl  $4, %esp                          
   # popfl
   iret
 

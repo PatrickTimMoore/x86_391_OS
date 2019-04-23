@@ -18,15 +18,17 @@
 int signals_ready = 0;
 
 void kill_task(void){
+    sti();
 	halt(0);
 }
 
 void ignore(void){
-	//fuck knows
+    sti();
 }
 
 void sig_pending(void){
 	if(!(signals_ready == 1)){return;}
+    cli();
 	int i;
 	uint32_t user_esp, handler_addr, ret_add;
     // uint32_t* intx80ptr, moveax9ptr;
@@ -51,15 +53,45 @@ void sig_pending(void){
 				(pcb_ptr->sig_data).sig_stat[i] = 1; //Set to executing
 				//User or kernel handler?
 				if (!(pcb_ptr->sig_data).hops[i]){ //kernel handler
-					if(i == 0 || i == 1 || i == 2){
-						kill_task();
-					}
-					else{
-						ignore();
-					}
+                    switch (i){
+                      case 0:
+                         printf("Division by zero\n");
+                        (pcb_ptr->sig_data).sig_stat[i] = 0;
+                         kill_task();
+                         break;
+                      case 1:
+                         printf("Segmentation fault\n");
+                        (pcb_ptr->sig_data).sig_stat[i] = 0;
+                         kill_task();
+                         break;
+                      case 2:
+                         // printf("SIG-INT\n");
+                        (pcb_ptr->sig_data).sig_stat[i] = 0;
+                         kill_task();
+                         break;
+                      case 3: 
+                         // printf("ALARM!\n");
+                        (pcb_ptr->sig_data).sig_stat[i] = 0;
+                         ignore();
+                         break;
+                      case 4: 
+                         printf("USER1\n");
+                        (pcb_ptr->sig_data).sig_stat[i] = 0;
+                         ignore();
+                         break;
+                      default: 
+                         break;
+                    }
+                    sti();
 				}
 				else{ //user handler
-					printf("we are here\n");
+					// printf("we are here\n");
+                    if(i == 1)
+                        {
+                            sti();
+                            continue;
+                        }
+
 					asm volatile ("   \n\
     					movl 64(%%ebp), %%eax \n\
     					"
@@ -70,6 +102,7 @@ void sig_pending(void){
 
     				if(!user_esp){
     					printf("lol you fucked up\n");
+                        sti();
     					return;
     				}
     				// printf("User esp: %x\n", user_esp);
@@ -131,6 +164,8 @@ void sig_pending(void){
 
 
 				}
+                sti();
+                break;
 		}
 	}
 }
