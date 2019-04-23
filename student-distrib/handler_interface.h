@@ -16,6 +16,8 @@ extern void pit_interrupt();
 /*handler for system call*/
 extern void system_call_handler();
 
+extern void sig_ret();
+
 /*handler for exceptions*/
 extern void exception_jump_man_0();
 extern void exception_jump_man_1();

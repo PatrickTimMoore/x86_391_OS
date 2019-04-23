@@ -4,6 +4,7 @@
 #include "keyboard_handler.h"
 #include "scheduling.h"
 #include "lib.h"
+#include "handler_interface.h"
 
 #define NUM_SIGS		5
 #define ADDR_TO_ESP 	15*4;
@@ -78,9 +79,10 @@ void sig_pending(void){
   					handler_addr = (pcb_ptr->sig_data).hops[i];    				
 
 					asm volatile ("   \n\
-    					movl $0xCD089090, -4(%0)  \n\
-    					movl $0x00909090, -8(%0)  \n\
-    					movl $0xB8090000, -12(%0) \n\
+                        movl sig_ret+4, %%edi      \n\
+                        movl %%edi,  -8(%0)        \n\  
+                        movl sig_ret, %%edi        \n\
+                        movl %%edi,  -12(%0)       \n\  
     					movl 68(%%ebp), %%edi	  \n\
     					movl %%edi, -16(%0) 	  \n\
     					movl 64(%%ebp), %%edi	  \n\

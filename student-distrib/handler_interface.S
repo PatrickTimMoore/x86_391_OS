@@ -53,6 +53,15 @@ func_name:                                ;\
  INTERRUPT_HANDLER(pit_interrupt, pit_handler);
 
 
+.global sig_ret
+sig_ret:
+    movl $10, %eax
+    int $0x80
+
+
+
+
+
 /* system call common interface
 ** This is a common interface for all of the system calls
 ** In this common codes, we will save all the registers and call the specifc
