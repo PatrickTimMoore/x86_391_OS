@@ -78,6 +78,7 @@ system_call_handler:
   pushl %fs
   pushl %es
   pushl %ds
+  pushl %eax
   pushl %ebp
   pushl %edi
   pushl %esi
@@ -108,6 +109,7 @@ system_call_handler:
   popl  %esi
   popl  %edi
   popl  %ebp
+  addl $4, %esp
   popl  %ds
   popl  %es
   popl  %fs

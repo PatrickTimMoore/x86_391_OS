@@ -118,7 +118,7 @@ void rtc_handler(){
     outb(CTRC, RTC_PORT1);
     inb(RTC_PORT2);
     //enable the interrupt
-    sti();
+ 
 }
 
 

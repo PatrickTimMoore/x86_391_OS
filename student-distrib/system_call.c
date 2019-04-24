@@ -332,11 +332,15 @@ int32_t execute (const uint8_t* command){
     pcb_ptr->pid = process_num;
     pcb_ptr->terminal = term_num;
 
-    // Initializes signal information
-    for (i = 0; i < NUM_SIGS; ++i){
-      (pcb_ptr->sig_data).sig_stat[i] = 0;
-      (pcb_ptr->sig_data).hops[i] = 0;
-    }
+    //Initializes signal information
+   if(signals_ready == 0){
+   	   // for(i=0; i<NUM_SIGS; i++){
+   	   // 	    pcb_ptr->sig_data.sig_stat[i]= 0;
+   	   // 	    pcb_ptr->sig_data.hops[i]= 0;
+   	   // }
+   	   signals_ready = 1;
+
+   }
 
     // copies the command arguments
     for(i = 0; i < argbound; i++){
@@ -685,7 +689,7 @@ int32_t sigreturn (void){
   int i;
   uint32_t user_esp, eax;
   asm volatile ("   \n\
-      movl 60(%%ebp), %%eax \n\
+      movl 64(%%ebp), %%eax \n\
       "
       :"=a"(user_esp)
       :
@@ -698,22 +702,24 @@ int32_t sigreturn (void){
 
   asm volatile ("                     \n\
               movl 60(%0), %%edi      \n\
-              movl %%edi, 64(%%ebp)   \n\
+              movl %%edi, 68(%%ebp)   \n\
               movl 56(%0), %%edi      \n\
-              movl %%edi, 60(%%ebp)   \n\
+              movl %%edi, 64(%%ebp)   \n\
               movl 52(%0), %%edi      \n\
-              movl %%edi, 56(%%ebp)   \n\
+              movl %%edi, 60(%%ebp)   \n\
               movl 48(%0), %%edi      \n\
-              movl %%edi, 52(%%ebp)   \n\
+              movl %%edi, 56(%%ebp)   \n\
               movl 44(%0), %%edi      \n\
-              movl %%edi, 48(%%ebp)   \n\
+              movl %%edi, 52(%%ebp)   \n\
               movl 40(%0), %%edi      \n\
-              movl %%edi, 44(%%ebp)   \n\
+              movl %%edi, 48(%%ebp)   \n\
               movl 36(%0), %%edi      \n\
-              movl %%edi, 40(%%ebp)   \n\
+              movl %%edi, 44(%%ebp)   \n\
               movl 32(%0), %%edi      \n\
-              movl %%edi, 36(%%ebp)   \n\
+              movl %%edi, 40(%%ebp)   \n\
               movl 28(%0), %%edi      \n\
+              movl %%edi, 36(%%ebp)   \n\
+              movl 24(%0), %%edi      \n\
               movl %%edi, 32(%%ebp)   \n\
               movl 20(%0), %%edi      \n\
               movl %%edi, 28(%%ebp)   \n\
