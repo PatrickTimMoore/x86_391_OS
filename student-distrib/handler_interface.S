@@ -103,13 +103,15 @@ system_call_handler:
   addl  $-1, %eax
   FINISH:
   //pop EDX, then ECX, then EBX, leaves EAX as return value
+  movl %eax, 24(%esp)
+  call sig_pending
   popl  %ebx
   popl  %ecx
   popl  %edx
   popl  %esi
   popl  %edi
   popl  %ebp
-  addl $4, %esp
+  popl  %eax
   popl  %ds
   popl  %es
   popl  %fs
