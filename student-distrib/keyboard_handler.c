@@ -239,7 +239,10 @@ void keyboard_handler(){
                 	  }
                     else if(scancodeVal == SCANCODE_C){
                         printf("^C\n");
-                        raise_sig(INTERRUPT);
+                        //raise_sig(INTERRUPT);
+                        pcb_t* pcb_ptr;
+                        pcb_ptr = get_pcb(terms[term_num].act_pid);
+                        (pcb_ptr->sig_data).sig_stat[INTERRUPT] = -1; 
                     }
                 //check if the enter key is hit
                 } else if(scancodeVal == ENTERKEY){
