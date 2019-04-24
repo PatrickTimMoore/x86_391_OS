@@ -16,7 +16,7 @@
 // }
 
 int signals_ready = 0;
-static int signals_index = 0;
+static int signals_index[3] = {0, 0, 0};
 
 void kill_task(void){
     sti();
@@ -29,6 +29,8 @@ void ignore(void){
 
 void sig_pending(void){
 	if(!(signals_ready == 1)){return;}
+    cli();
+
 	int i;
 	uint32_t user_esp, handler_addr, ret_add, new_cs;
     // uint32_t* intx80ptr, moveax9ptr;
@@ -49,14 +51,13 @@ void sig_pending(void){
 	// void* hand_ptr;
 
 	for (i = 0; i < NUM_SIGS; i++){
-		signals_index = (signals_index+1)%NUM_SIGS;
-		if((pcb_ptr->sig_data).sig_stat[signals_index] == -1){
+		signals_index[run_term] = (signals_index[run_term]+1)%NUM_SIGS;
+		if((pcb_ptr->sig_data).sig_stat[signals_index[run_term]] == -1){
 			break;
 		}      
 	}
-	i = signals_index;
+	i = signals_index[run_term];
 
-    cli();
 	//Are we at a pending signal?
 	if((pcb_ptr->sig_data).sig_stat[i] == -1){
 
@@ -81,7 +82,7 @@ void sig_pending(void){
                      kill_task();
                      break;
                   case 3: 
-                     printf("ALARM!\n");
+                     // printf("ALARM!\n");
                     (pcb_ptr->sig_data).sig_stat[i] = 0;
                      ignore();
                      break;
@@ -171,12 +172,12 @@ void sig_pending(void){
 				);
 				//NO RET, IRET, or JMP
 				//Still push return address to sigreturn on stack
-
+                sti();
 
 			}
 	}
 
-	sti();
+	// sti();
 }
 
 int32_t raise_sig(uint32_t signum){

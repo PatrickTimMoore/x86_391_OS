@@ -686,6 +686,7 @@ int32_t set_handler (int32_t signum, void* handler_address){
 
 int32_t sigreturn (void){
   // printf("Sig Return: Yeet.\n");
+  cli();
   int i;
   uint32_t user_esp, eax;
   asm volatile ("   \n\
@@ -742,7 +743,7 @@ int32_t sigreturn (void){
 
   // printf("Got past THAT shit\n");
   (get_pcb(terms[run_term].act_pid)->sig_data).sig_stat[i] = 0;
-
+  sti();
   return eax;
 }
 
