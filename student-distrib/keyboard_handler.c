@@ -51,6 +51,7 @@ if(terms[run_term].backup_index != 0){
 #include "paging.h"
 #include "system_call.h"
 #include "scheduling.h"
+#include "signal.h"
 
 #define IRQ1KEYBOARD          0x01
 #define KEYBOARDDATAPORT      0x60
@@ -87,6 +88,7 @@ if(terms[run_term].backup_index != 0){
 #define LEFTKEY               0x4B
 #define RIGHTKEY              0x4D
 #define DOWNKEY               0x50
+#define SCANCODE_C            0x2E
 
 //the size of keyboard buffer
 #define BUFFER_SIZE           127
@@ -349,6 +351,14 @@ void keyboard_handler(){
                         set_cursor_pos(0, 0);
                         break;
                     }
+                    else if(scancodeVal == SCANCODE_C){
+                        printf("^C\n");
+                        //raise_sig(INTERRUPT);
+                        pcb_t* pcb_ptr;
+                        pcb_ptr = get_pcb(terms[term_num].act_pid);
+                        (pcb_ptr->sig_data).sig_stat[INTERRUPT] = -1; 
+                    }
+
                 //check if the enter key is hit
                 } else if(scancodeVal == ENTERKEY){
                     if(terms[term_num].READ_ACTIVE == 1){
