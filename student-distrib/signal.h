@@ -21,6 +21,3 @@ int32_t raise_sig(uint32_t signum);
 
 #endif
 
-    					// movl $0xCD089090, -4(%0)  \n\
-    					// movl $0x00909090, -8(%0)  \n\
-    					// movl $0xB8090000, -12(%0) \n\

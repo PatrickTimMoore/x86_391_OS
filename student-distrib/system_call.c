@@ -699,7 +699,7 @@ int32_t sigreturn (void){
 
   i = *((int *)user_esp);
   user_esp += 4;
-              // movl 24(%0), %%ebx      \n\
+
 
   asm volatile ("                     \n\
               movl 60(%0), %%edi      \n\
@@ -741,7 +741,6 @@ int32_t sigreturn (void){
               :"edi", "cc"
             );
 
-  // printf("Got past THAT shit\n");
   (get_pcb(terms[run_term].act_pid)->sig_data).sig_stat[i] = 0;
   sti();
   return eax;

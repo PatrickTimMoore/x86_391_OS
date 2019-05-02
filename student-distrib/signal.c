@@ -67,7 +67,6 @@ void sig_pending(void){
 			if (!(pcb_ptr->sig_data).hops[i]){ //kernel handler
                 switch (i){
                   case 0:
-                     printf("Division by zero\n");
                     (pcb_ptr->sig_data).sig_stat[i] = 0;
                      kill_task();
                      break;
@@ -121,13 +120,14 @@ void sig_pending(void){
 				
 				// pcb_ptr = get_curr_pcb();
 				handler_addr = (pcb_ptr->sig_data).hops[i];    				
-                
+                (pcb_ptr->sig_data).sig_stat[i] = 0;
+                (pcb_ptr->sig_data).hops[i] = 0;
 				asm volatile ("   \n\
                     movl sig_ret+4, %%edi     \n\
-                    movl %%edi,  -8(%0)       \n\  
+                    movl %%edi,  -8(%0)       \n\
                     movl sig_ret, %%edi       \n\
-                    movl %%edi,  -12(%0)      \n\  
-					movl 68(%%ebp), %%edi	  \n\
+                    movl %%edi,  -12(%0)      \n\
+                    movl 68(%%ebp), %%edi	  \n\
 					movl %%edi, -16(%0) 	  \n\
 					movl 64(%%ebp), %%edi	  \n\
 					movl %%edi, -20(%0) 	  \n\
