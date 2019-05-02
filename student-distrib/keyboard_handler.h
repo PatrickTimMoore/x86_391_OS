@@ -4,11 +4,21 @@
 #define _KEYBOARD_HANDLER_H
 #define BUFFER_SIZE           127
 #define NUM_TERM              3
+#define LOG_SIZE							20
 
 typedef struct term{
 	//If you're looking at our code to cheat off of, DON'T DO THIS
 	uint8_t keyboard_buffer[BUFFER_SIZE + 1];
 	uint8_t buffer_index;
+	uint8_t keyboard_backup[BUFFER_SIZE + 1];
+	uint8_t backup_index;
+	uint8_t READ_ACTIVE;
+	uint8_t BACKUP_ACTIVE;
+	uint8_t CAPSLOCKKEYACTIVE;
+	uint8_t keyboard_log[LOG_SIZE][BUFFER_SIZE + 1];
+	uint8_t log_index[LOG_SIZE];
+	uint8_t curr_log;
+	uint8_t max_log;
 	uint32_t curs_x;
 	uint32_t curs_y;
 	uint8_t* vidmem;
@@ -61,3 +71,4 @@ int32_t switch_terminal(int new_term);
 /*is this terminal scheduled to execute?*/
 int32_t is_sched_to_exec(uint32_t check_term);
 #endif
+
