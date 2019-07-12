@@ -316,6 +316,7 @@ void keyboard_handler(){
                 break;
             } else if(terms[term_num].BACKUP_ACTIVE == 1) {
               if(terms[term_num].backup_index != 0){
+                  backspace_helper();
                   terms[term_num].backup_index--;
                   (terms[term_num].keyboard_backup)[terms[term_num].backup_index]= NULL;
               }
@@ -356,7 +357,7 @@ void keyboard_handler(){
                         //raise_sig(INTERRUPT);
                         pcb_t* pcb_ptr;
                         pcb_ptr = get_pcb(terms[term_num].act_pid);
-                        (pcb_ptr->sig_data).sig_stat[INTERRUPT] = -1; 
+                        (pcb_ptr->sig_data).sig_stat[INTERRUPT] = -1;
                     }
 
                 //check if the enter key is hit
